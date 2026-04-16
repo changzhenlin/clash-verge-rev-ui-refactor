@@ -18,9 +18,7 @@
         "proxyMode": "Proxy Mode Card",
         "traffic": "Traffic Stats Card",
         "tests": "Website Tests Card",
-        "ip": "IP Information Card",
-        "clashInfo": "Clash Info Cards",
-        "systemInfo": "System Info Cards"
+        "ip": "IP Information Card"
       },
       "title": "Home Settings"
     },
@@ -38,35 +36,6 @@
       "tooltips": {
         "systemProxy": "عند التمكين، سيتم تعديل إعدادات الوكيل في نظام التشغيل. إذا فشل التمكين، فقم بتعديل إعدادات الوكيل في النظام يدويًا.",
         "tunMode": "TUN mode can take over all application traffic, suitable for special applications that do not follow the system proxy settings"
-      }
-    },
-    "clashInfo": {
-      "title": "Clash Info",
-      "fields": {
-        "coreVersion": "Core Version",
-        "systemProxyAddress": "System Proxy Address",
-        "mixedPort": "Mixed Port",
-        "uptime": "Uptime",
-        "rulesCount": "Rules Count"
-      }
-    },
-    "systemInfo": {
-      "title": "System Info",
-      "fields": {
-        "osInfo": "OS Info",
-        "autoLaunch": "إطلاق تلقائي",
-        "runningMode": "Running Mode",
-        "lastCheckUpdate": "Last Check Update",
-        "vergeVersion": "إصدار Verge"
-      },
-      "actions": {
-        "settings": "الإعدادات"
-      },
-      "badges": {
-        "adminMode": "Administrator Mode",
-        "serviceMode": "وضع الخدمة",
-        "sidecarMode": "User Mode",
-        "adminServiceMode": "Admin + Service Mode"
       }
     },
     "ipInfo": {

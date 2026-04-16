@@ -18,9 +18,7 @@
         "proxyMode": "Proxy-Modus-Karte",
         "traffic": "Verkehrsstatistik-Karte",
         "tests": "Website-Tests-Karte",
-        "ip": "IP-Informationen-Karte",
-        "clashInfo": "Clash-Informationen-Karten",
-        "systemInfo": "Systeminformationen-Karten"
+        "ip": "IP-Informationen-Karte"
       },
       "title": "Startseite-Einstellungen"
     },
@@ -38,35 +36,6 @@
       "tooltips": {
         "systemProxy": "Ändern Sie die Proxy-Einstellungen des Betriebssystems. Wenn die Aktivierung fehlschlägt, können Sie die Proxy-Einstellungen des Betriebssystems manuell ändern.",
         "tunMode": "Der TUN-Modus kann den gesamten Anwendungsverkehr übernehmen und eignet sich für spezielle Anwendungen, die die Systemproxy-Einstellungen nicht befolgen."
-      }
-    },
-    "clashInfo": {
-      "title": "Clash-Informationen",
-      "fields": {
-        "coreVersion": "Kernversion",
-        "systemProxyAddress": "Systemproxy-Adresse",
-        "mixedPort": "Mixed Port",
-        "uptime": "Laufzeit",
-        "rulesCount": "Anzahl der Regeln"
-      }
-    },
-    "systemInfo": {
-      "title": "Systeminformationen",
-      "fields": {
-        "osInfo": "Betriebssysteminformationen",
-        "autoLaunch": "Beim Start automatisch starten",
-        "runningMode": "Betriebsmodus",
-        "lastCheckUpdate": "Letzte Aktualitätsprüfung",
-        "vergeVersion": "Verge-Version"
-      },
-      "actions": {
-        "settings": "Einstellungen"
-      },
-      "badges": {
-        "adminMode": "Administrator-Modus",
-        "serviceMode": "Service-Modus",
-        "sidecarMode": "Benutzermodus",
-        "adminServiceMode": "Admin + Service Mode"
       }
     },
     "ipInfo": {

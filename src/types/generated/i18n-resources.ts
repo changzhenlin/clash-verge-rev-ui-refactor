@@ -39,16 +39,6 @@ export interface TranslationResources {
     }
     home: {
       components: {
-        clashInfo: {
-          fields: {
-            coreVersion: string
-            mixedPort: string
-            rulesCount: string
-            systemProxyAddress: string
-            uptime: string
-          }
-          title: string
-        }
         clashMode: {
           descriptions: {
             direct: string
@@ -106,25 +96,6 @@ export interface TranslationResources {
             tunMode: string
           }
         }
-        systemInfo: {
-          actions: {
-            settings: string
-          }
-          badges: {
-            adminMode: string
-            adminServiceMode: string
-            serviceMode: string
-            sidecarMode: string
-          }
-          fields: {
-            autoLaunch: string
-            lastCheckUpdate: string
-            osInfo: string
-            runningMode: string
-            vergeVersion: string
-          }
-          title: string
-        }
         tests: {
           title: string
         }
@@ -152,13 +123,11 @@ export interface TranslationResources {
         }
         settings: {
           cards: {
-            clashInfo: string
             currentProxy: string
             ip: string
             network: string
             profile: string
             proxyMode: string
-            systemInfo: string
             tests: string
             traffic: string
           }

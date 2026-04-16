@@ -1,10 +1,12 @@
 import {
+  ArrowDownwardRounded,
+  ArrowUpwardRounded,
   DnsOutlined,
+  PublicRounded,
   HelpOutlineRounded,
   HistoryEduOutlined,
-  RouterOutlined,
   SettingsOutlined,
-  SpeedOutlined,
+  BoltRounded,
 } from '@mui/icons-material'
 import {
   Box,
@@ -18,44 +20,32 @@ import {
   FormGroup,
   Grid,
   IconButton,
-  Skeleton,
   Tooltip,
+  Typography,
+  useTheme,
 } from '@mui/material'
 import { useLockFn } from 'ahooks'
-import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router'
 
-import { BasePage } from '@/components/base'
 import { ClashModeCard } from '@/components/home/clash-mode-card'
-import { CurrentProxyCard } from '@/components/home/current-proxy-card'
 import { EnhancedCard } from '@/components/home/enhanced-card'
-import { EnhancedTrafficStats } from '@/components/home/enhanced-traffic-stats'
 import { HomeProfileCard } from '@/components/home/home-profile-card'
 import { ProxyTunCard } from '@/components/home/proxy-tun-card'
+import {
+  TrafficGraph,
+  type TrafficRef,
+} from '@/components/layout/traffic-graph'
+import { useAppData } from '@/providers/app-data-context'
+import { useConnectionData } from '@/hooks/use-connection-data'
+import { useCurrentProxy } from '@/hooks/use-current-proxy'
 import { useProfiles } from '@/hooks/use-profiles'
+import { useTrafficData } from '@/hooks/use-traffic-data'
 import { useVerge } from '@/hooks/use-verge'
 import { entry_lightweight_mode, openWebUrl } from '@/services/cmds'
-
-const LazyTestCard = lazy(() =>
-  import('@/components/home/test-card').then((module) => ({
-    default: module.TestCard,
-  })),
-)
-const LazyIpInfoCard = lazy(() =>
-  import('@/components/home/ip-info-card').then((module) => ({
-    default: module.IpInfoCard,
-  })),
-)
-const LazyClashInfoCard = lazy(() =>
-  import('@/components/home/clash-info-card').then((module) => ({
-    default: module.ClashInfoCard,
-  })),
-)
-const LazySystemInfoCard = lazy(() =>
-  import('@/components/home/system-info-card').then((module) => ({
-    default: module.SystemInfoCard,
-  })),
-)
+import delayManager from '@/services/delay'
+import parseTraffic from '@/utils/parse-traffic'
 
 // 定义首页卡片设置接口
 interface HomeCardsSettings {
@@ -64,11 +54,6 @@ interface HomeCardsSettings {
   network: boolean
   mode: boolean
   traffic: boolean
-  info: boolean
-  clashinfo: boolean
-  systeminfo: boolean
-  test: boolean
-  ip: boolean
   [key: string]: boolean
 }
 
@@ -160,42 +145,6 @@ const HomeSettingsDialog = ({
             }
             label={t('home.page.settings.cards.traffic')}
           />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.test || false}
-                onChange={() => handleToggle('test')}
-              />
-            }
-            label={t('home.page.settings.cards.tests')}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.ip || false}
-                onChange={() => handleToggle('ip')}
-              />
-            }
-            label={t('home.page.settings.cards.ip')}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.clashinfo || false}
-                onChange={() => handleToggle('clashinfo')}
-              />
-            }
-            label={t('home.page.settings.cards.clashInfo')}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={cards.systeminfo || false}
-                onChange={() => handleToggle('systeminfo')}
-              />
-            }
-            label={t('home.page.settings.cards.systemInfo')}
-          />
         </FormGroup>
       </DialogContent>
       <DialogActions>
@@ -205,6 +154,287 @@ const HomeSettingsDialog = ({
         </Button>
       </DialogActions>
     </Dialog>
+  )
+}
+
+const codeToFlag = (countryCode?: string) => {
+  if (!countryCode || countryCode.length !== 2) return '🌐'
+  return String.fromCodePoint(
+    ...countryCode
+      .toUpperCase()
+      .split('')
+      .map((char) => 127397 + char.charCodeAt(0)),
+  )
+}
+
+const inferFlagFromName = (name?: string | null) => {
+  if (!name) return '🌐'
+
+  const normalized = name.toLowerCase()
+  const regionMap: Array<[string[], string]> = [
+    [['hong kong', 'hk', '香港'], 'HK'],
+    [['singapore', 'sg', '新加坡'], 'SG'],
+    [['tokyo', 'japan', 'jp', '日本'], 'JP'],
+    [['us', 'united states', 'america', '美'], 'US'],
+    [['london', 'uk', 'britain', '英国'], 'GB'],
+    [['frankfurt', 'germany', 'de', '德国'], 'DE'],
+    [['korea', 'kr', '首尔', '韩国'], 'KR'],
+    [['taiwan', 'tw', '台湾'], 'TW'],
+  ]
+
+  const matched = regionMap.find(([keywords]) =>
+    keywords.some((keyword) => normalized.includes(keyword)),
+  )
+
+  return codeToFlag(matched?.[1])
+}
+
+const normalizeNodeName = (value: unknown) => {
+  if (typeof value === 'string') {
+    return value.trim()
+  }
+  if (
+    value &&
+    typeof value === 'object' &&
+    'name' in value &&
+    typeof value.name === 'string'
+  ) {
+    return value.name.trim()
+  }
+  return ''
+}
+
+const GlassPanel = ({
+  children,
+  hover = false,
+}: {
+  children: React.ReactNode
+  hover?: boolean
+}) => (
+  <Box
+    sx={{
+      borderRadius: 3,
+      border: '1px solid rgba(255,255,255,0.08)',
+      background: 'rgba(26, 26, 26, 0.6)',
+      backdropFilter: 'blur(20px) saturate(150%)',
+      boxShadow:
+        '0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+      transition: 'transform 0.2s ease, background-color 0.2s ease',
+      ...(hover
+        ? {
+            '&:hover': {
+              transform: 'translateY(-2px) scale(1.02)',
+              background: 'rgba(30, 30, 30, 0.7)',
+            },
+          }
+        : {}),
+    }}
+  >
+    {children}
+  </Box>
+)
+
+const DashboardOverview = ({ showTraffic }: { showTraffic: boolean }) => {
+  const theme = useTheme()
+  const {
+    response: { data: traffic },
+  } = useTrafficData()
+  const trafficRef = useRef<TrafficRef>(null)
+
+  const [up, upUnit] = parseTraffic(traffic?.up || 0)
+  const [down, downUnit] = parseTraffic(traffic?.down || 0)
+
+  useEffect(() => {
+    if (trafficRef.current && showTraffic) {
+      trafficRef.current.appendData({
+        up: traffic?.up || 0,
+        down: traffic?.down || 0,
+      })
+    }
+  }, [showTraffic, traffic])
+
+  return (
+    <GlassPanel>
+      <Box sx={{ p: 2.5 }}>
+        {showTraffic ? (
+          <Box sx={{ height: 156, mb: 2.25, mx: -0.5 }}>
+            <TrafficGraph ref={trafficRef} />
+          </Box>
+        ) : null}
+
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            pt: 1.5,
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ArrowUpwardRounded
+              sx={{ fontSize: 14, color: theme.palette.success.main }}
+            />
+            <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+              Upload
+            </Typography>
+            <Typography
+              sx={{
+                ml: 1,
+                fontSize: 12,
+                color: 'rgba(255,255,255,0.9)',
+                fontFamily: 'monospace',
+              }}
+            >
+              {`${up} ${upUnit}/s`}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ArrowDownwardRounded
+              sx={{ fontSize: 14, color: theme.palette.info.main }}
+            />
+            <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+              Download
+            </Typography>
+            <Typography
+              sx={{
+                ml: 1,
+                fontSize: 12,
+                color: 'rgba(255,255,255,0.9)',
+                fontFamily: 'monospace',
+              }}
+            >
+              {`${down} ${downUnit}/s`}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </GlassPanel>
+  )
+}
+
+const QuickNodeSwitch = ({ visible }: { visible: boolean }) => {
+  const navigate = useNavigate()
+  const { proxies } = useAppData()
+  const { currentProxy, primaryGroupName } = useCurrentProxy()
+
+  const groupName = primaryGroupName || 'GLOBAL'
+
+  const nodes = useMemo<
+    Array<{
+      name: string
+      latency: number
+      isActive: boolean
+      flag: string
+    }>
+  >(() => {
+    if (!visible || !proxies) return []
+
+    const sourceGroup =
+      groupName === 'GLOBAL'
+        ? proxies.global
+        : proxies.groups?.find((group: any) => group.name === groupName)
+
+    const options = (Array.isArray(sourceGroup?.all) ? sourceGroup.all : [])
+      .map((item: unknown) => normalizeNodeName(item))
+      .filter((name: string): name is string => Boolean(name))
+      .filter((name: string) => !['DIRECT', 'REJECT'].includes(name))
+      .slice(0, 6)
+
+    return options.map((name: string) => {
+      const record = proxies.records?.[name]
+      const latency = record ? delayManager.getDelayFix(record, groupName) : -1
+      return {
+        name,
+        latency,
+        isActive: currentProxy?.name === name,
+        flag: inferFlagFromName(name),
+      }
+    })
+  }, [currentProxy?.name, groupName, proxies, visible])
+
+  if (!visible || nodes.length === 0) return null
+
+  return (
+    <Box>
+      <Typography
+        sx={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', mb: 1.25 }}
+      >
+        Quick Node Switch
+      </Typography>
+      <Grid container spacing={1.5} columns={{ xs: 1, md: 3 }}>
+        {nodes.map((node) => (
+          <Grid key={node.name} size={1}>
+            <GlassPanel hover>
+              <Box
+                onClick={() => navigate('/proxies')}
+                sx={{ p: 2.25, cursor: 'pointer' }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mb: 1.75,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 22,
+                      fontFamily: '"twemoji mozilla", sans-serif',
+                    }}
+                  >
+                    {node.flag}
+                  </Typography>
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: node.isActive
+                        ? '#4ADE80'
+                        : 'rgba(255,255,255,0.2)',
+                    }}
+                  />
+                </Box>
+                <Typography
+                  sx={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', mb: 0.75 }}
+                >
+                  {node.name}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      backgroundColor:
+                        node.latency <= 0
+                          ? 'rgba(255,255,255,0.24)'
+                          : node.latency < 50
+                            ? '#4ADE80'
+                            : node.latency < 150
+                              ? '#FACC15'
+                              : '#F87171',
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: 11,
+                      color: 'rgba(255,255,255,0.5)',
+                      fontFamily: 'monospace',
+                    }}
+                  >
+                    {node.latency > 0 ? `${node.latency}ms` : '--'}
+                  </Typography>
+                </Box>
+              </Box>
+            </GlassPanel>
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
   )
 }
 
@@ -223,16 +453,11 @@ const HomePage = () => {
   // 卡片显示状态
   const defaultCards = useMemo<HomeCardsSettings>(
     () => ({
-      info: false,
       profile: true,
       proxy: true,
       network: true,
       mode: true,
       traffic: true,
-      clashinfo: true,
-      systeminfo: true,
-      test: true,
-      ip: true,
     }),
     [],
   )
@@ -290,9 +515,7 @@ const HomePage = () => {
         'profile',
         <HomeProfileCard current={current} onProfileUpdated={mutateProfiles} />,
       ),
-      renderCard('proxy', <CurrentProxyCard />),
       renderCard('network', <NetworkSettingsCard />),
-      renderCard('mode', <ClashModeEnhancedCard />),
     ],
     [current, mutateProfiles, renderCard],
   )
@@ -318,85 +541,33 @@ const HomePage = () => {
     }
   }
 
-  const nonCriticalCards = useMemo(
-    () => [
-      renderCard(
-        'traffic',
-        <EnhancedCard
-          title={t('home.page.cards.trafficStats')}
-          icon={<SpeedOutlined />}
-          iconColor="secondary"
-        >
-          <EnhancedTrafficStats />
-        </EnhancedCard>,
-        12,
-      ),
-      renderCard(
-        'test',
-        <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
-          <LazyTestCard />
-        </Suspense>,
-      ),
-      renderCard(
-        'ip',
-        <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
-          <LazyIpInfoCard />
-        </Suspense>,
-      ),
-      renderCard(
-        'clashinfo',
-        <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
-          <LazyClashInfoCard />
-        </Suspense>,
-      ),
-      renderCard(
-        'systeminfo',
-        <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
-          <LazySystemInfoCard />
-        </Suspense>,
-      ),
-    ],
-    [t, renderCard],
-  )
   const dialogKey = useMemo(
     () => `${serializeCardFlags(effectiveHomeCards)}:${settingsOpen ? 1 : 0}`,
     [effectiveHomeCards, settingsOpen],
   )
   return (
-    <BasePage
-      title={t('home.page.title')}
-      contentStyle={{ padding: 2 }}
-      header={
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Tooltip title={t('home.page.tooltips.lightweightMode')} arrow>
-            <IconButton
-              onClick={async () => await entry_lightweight_mode()}
-              size="small"
-              color="inherit"
-            >
-              <HistoryEduOutlined />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('home.page.tooltips.manual')} arrow>
-            <IconButton onClick={toGithubDoc} size="small" color="inherit">
-              <HelpOutlineRounded />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('home.page.tooltips.settings')} arrow>
-            <IconButton onClick={openSettings} size="small" color="inherit">
-              <SettingsOutlined />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      }
+    <Box
+      sx={{
+        p: 2,
+        minHeight: '100%',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1.5,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
     >
+
+
+      <Box sx={{ mb: 2 }}>
+        <DashboardOverview showTraffic={effectiveHomeCards.traffic} />
+      </Box>
+
       <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
         {criticalCards}
-
-        {nonCriticalCards}
       </Grid>
 
-      {/* 首页设置弹窗 */}
       <HomeSettingsDialog
         key={dialogKey}
         open={settingsOpen}
@@ -404,7 +575,7 @@ const HomePage = () => {
         homeCards={effectiveHomeCards}
         onSave={handleSaveSettings}
       />
-    </BasePage>
+    </Box>
   )
 }
 
@@ -419,21 +590,6 @@ const NetworkSettingsCard = () => {
       action={null}
     >
       <ProxyTunCard />
-    </EnhancedCard>
-  )
-}
-
-// 增强版 Clash 模式卡片组件
-const ClashModeEnhancedCard = () => {
-  const { t } = useTranslation()
-  return (
-    <EnhancedCard
-      title={t('home.page.cards.proxyMode')}
-      icon={<RouterOutlined />}
-      iconColor="info"
-      action={null}
-    >
-      <ClashModeCard />
     </EnhancedCard>
   )
 }

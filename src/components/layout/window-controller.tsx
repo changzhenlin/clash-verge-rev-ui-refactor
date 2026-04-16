@@ -45,29 +45,53 @@ export const WindowControls = forwardRef(function WindowControls(props, ref) {
         display: 'flex',
         gap: 1,
         alignItems: 'center',
+        color: 'text.secondary',
         '> button': {
           cursor: 'default',
+          width: OS === 'macos' ? 14 : 32,
+          height: OS === 'macos' ? 14 : 32,
+          border: OS === 'macos' ? '1px solid rgba(0,0,0,0.15)' : undefined,
         },
       }}
     >
       {OS === 'macos' && (
         <>
           {/* macOS 风格：关闭 → 最小化 → 全屏 */}
-          <IconButton size="small" sx={{ fontSize: 14 }} onClick={close}>
-            <Close fontSize="inherit" color="inherit" />
-          </IconButton>
-          <IconButton size="small" sx={{ fontSize: 14 }} onClick={minimize}>
-            <Minimize fontSize="inherit" color="inherit" />
+          <IconButton
+            size="small"
+            sx={{
+              fontSize: 0,
+              bgcolor: '#FF5F57',
+              ':hover': { bgcolor: '#ff4a42' },
+            }}
+            onClick={close}
+          >
+            <Close sx={{ fontSize: 9, opacity: 0 }} />
           </IconButton>
           <IconButton
             size="small"
-            sx={{ fontSize: 14 }}
+            sx={{
+              fontSize: 0,
+              bgcolor: '#FEBC2E',
+              ':hover': { bgcolor: '#f0ad19' },
+            }}
+            onClick={minimize}
+          >
+            <Minimize sx={{ fontSize: 9, opacity: 0 }} />
+          </IconButton>
+          <IconButton
+            size="small"
+            sx={{
+              fontSize: 0,
+              bgcolor: '#28C840',
+              ':hover': { bgcolor: '#20b338' },
+            }}
             onClick={toggleMaximize}
           >
             {maximized ? (
-              <FilterNone fontSize="inherit" color="inherit" />
+              <FilterNone sx={{ fontSize: 9, opacity: 0 }} />
             ) : (
-              <CropSquare fontSize="inherit" color="inherit" />
+              <CropSquare sx={{ fontSize: 9, opacity: 0 }} />
             )}
           </IconButton>
         </>

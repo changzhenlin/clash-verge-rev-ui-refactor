@@ -169,10 +169,67 @@ export const useCustomTheme = () => {
           },
         },
         shadows: Array(25).fill('none') as Shadows,
+        shape: {
+          borderRadius: 16,
+        },
         typography: {
           fontFamily: setting.font_family
             ? `${setting.font_family}, ${dt.font_family}`
             : dt.font_family,
+          h6: {
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+          },
+          body2: {
+            letterSpacing: '-0.01em',
+          },
+        },
+        components: {
+          MuiPaper: {
+            styleOverrides: {
+              root: {
+                backgroundImage: 'none',
+              },
+            },
+          },
+          MuiDialog: {
+            styleOverrides: {
+              paper: {
+                borderRadius: 20,
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background:
+                  mode === 'light'
+                    ? 'rgba(255, 255, 255, 0.92)'
+                    : 'rgba(20, 20, 20, 0.88)',
+                backdropFilter: 'blur(28px) saturate(140%)',
+              },
+            },
+          },
+          MuiMenu: {
+            styleOverrides: {
+              paper: {
+                borderRadius: 16,
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background:
+                  mode === 'light'
+                    ? 'rgba(255, 255, 255, 0.9)'
+                    : 'rgba(20, 20, 20, 0.9)',
+                backdropFilter: 'blur(24px) saturate(140%)',
+              },
+            },
+          },
+          MuiTooltip: {
+            styleOverrides: {
+              tooltip: {
+                borderRadius: 10,
+                backdropFilter: 'blur(20px)',
+                background:
+                  mode === 'light'
+                    ? 'rgba(255, 255, 255, 0.9)'
+                    : 'rgba(15, 15, 15, 0.9)',
+              },
+            },
+          },
         },
       })
     } catch (e) {
@@ -202,14 +259,52 @@ export const useCustomTheme = () => {
     const rootEle = document.documentElement
     if (rootEle) {
       const backgroundColor = mode === 'light' ? '#ECECEC' : dt.background_color
-      const selectColor = mode === 'light' ? '#f5f5f5' : '#3E3E3E'
-      const scrollColor = mode === 'light' ? '#90939980' : '#555555'
+      const selectColor =
+        mode === 'light'
+          ? 'rgba(99, 102, 241, 0.12)'
+          : 'rgba(99, 102, 241, 0.24)'
+      const scrollColor =
+        mode === 'light'
+          ? 'rgba(148, 163, 184, 0.6)'
+          : 'rgba(255, 255, 255, 0.14)'
       const dividerColor =
-        mode === 'light' ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)'
+        mode === 'light'
+          ? 'rgba(15, 23, 42, 0.08)'
+          : 'rgba(255, 255, 255, 0.06)'
       rootEle.style.setProperty('--divider-color', dividerColor)
       rootEle.style.setProperty('--background-color', backgroundColor)
       rootEle.style.setProperty('--selection-color', selectColor)
       rootEle.style.setProperty('--scroller-color', scrollColor)
+      rootEle.style.setProperty(
+        '--shell-background',
+        mode === 'light'
+          ? 'linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)'
+          : 'radial-gradient(circle at top, rgba(99, 102, 241, 0.18), transparent 34%), #0f0f0f',
+      )
+      rootEle.style.setProperty(
+        '--glass-panel-bg',
+        mode === 'light'
+          ? 'rgba(255, 255, 255, 0.76)'
+          : 'rgba(24, 24, 27, 0.68)',
+      )
+      rootEle.style.setProperty(
+        '--glass-panel-strong',
+        mode === 'light'
+          ? 'rgba(255, 255, 255, 0.9)'
+          : 'rgba(15, 15, 15, 0.92)',
+      )
+      rootEle.style.setProperty(
+        '--glass-border',
+        mode === 'light'
+          ? 'rgba(15, 23, 42, 0.08)'
+          : 'rgba(255, 255, 255, 0.08)',
+      )
+      rootEle.style.setProperty(
+        '--glass-shadow',
+        mode === 'light'
+          ? '0 18px 60px rgba(15, 23, 42, 0.08)'
+          : '0 20px 60px rgba(0, 0, 0, 0.35)',
+      )
       rootEle.style.setProperty('--primary-main', muiTheme.palette.primary.main)
       rootEle.style.setProperty(
         '--background-color-alpha',

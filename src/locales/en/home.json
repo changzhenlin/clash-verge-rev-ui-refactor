@@ -18,9 +18,7 @@
         "proxyMode": "Proxy Mode Card",
         "traffic": "Traffic Stats Card",
         "tests": "Website Tests Card",
-        "ip": "IP Information Card",
-        "clashInfo": "Clash Info Cards",
-        "systemInfo": "System Info Cards"
+        "ip": "IP Information Card"
       },
       "title": "Home Settings"
     },
@@ -38,35 +36,6 @@
       "tooltips": {
         "systemProxy": "System Proxy Info",
         "tunMode": "TUN Mode Intercept Info"
-      }
-    },
-    "clashInfo": {
-      "title": "Clash Info",
-      "fields": {
-        "coreVersion": "Core Version",
-        "systemProxyAddress": "System Proxy Address",
-        "mixedPort": "Mixed Port",
-        "uptime": "Uptime",
-        "rulesCount": "Rules Count"
-      }
-    },
-    "systemInfo": {
-      "title": "System Info",
-      "fields": {
-        "osInfo": "OS Info",
-        "autoLaunch": "Auto Launch",
-        "runningMode": "Running Mode",
-        "lastCheckUpdate": "Last Check Update",
-        "vergeVersion": "Verge Version"
-      },
-      "actions": {
-        "settings": "Settings"
-      },
-      "badges": {
-        "adminMode": "Administrator Mode",
-        "serviceMode": "Service Mode",
-        "sidecarMode": "User Mode",
-        "adminServiceMode": "Admin + Service Mode"
       }
     },
     "ipInfo": {

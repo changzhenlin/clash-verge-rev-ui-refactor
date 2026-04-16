@@ -27,7 +27,6 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
     ref,
   ) => {
     const theme = useTheme()
-    const isDark = theme.palette.mode === 'dark'
 
     // 统一的标题截断样式
     const titleTruncateStyle = {
@@ -45,20 +44,23 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: 2,
-          backgroundColor: isDark ? '#282a36' : '#ffffff',
+          borderRadius: 4,
+          border: '1px solid var(--glass-border)',
+          background: 'var(--glass-panel-bg)',
+          backdropFilter: 'blur(24px) saturate(150%)',
+          boxShadow: 'var(--glass-shadow)',
+          overflow: 'hidden',
         }}
         ref={ref}
       >
         <Box
           sx={{
-            px: 2,
-            py: 1,
+            px: 2.5,
+            py: 1.5,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: 1,
-            borderColor: 'divider',
+            borderBottom: '1px solid var(--glass-border)',
           }}
         >
           <Box
@@ -76,12 +78,16 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: 1.5,
-                width: 38,
-                height: 38,
-                mr: 1.5,
+                width: 40,
+                height: 40,
+                mr: 1.75,
                 flexShrink: 0,
-                backgroundColor: alpha(theme.palette[iconColor].main, 0.12),
+                background: `linear-gradient(135deg, ${alpha(
+                  theme.palette[iconColor].main,
+                  0.28,
+                )} 0%, ${alpha(theme.palette[iconColor].main, 0.12)} 100%)`,
                 color: theme.palette[iconColor].main,
+                border: `1px solid ${alpha(theme.palette[iconColor].main, 0.22)}`,
               }}
             >
               {icon}
@@ -111,7 +117,7 @@ export const EnhancedCard = forwardRef<HTMLElement, EnhancedCardProps>(
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            p: noContentPadding ? 0 : 2,
+            p: noContentPadding ? 0 : 2.5,
             ...(minHeight && { minHeight }),
           }}
         >

@@ -20,13 +20,13 @@ export const defaultTheme = {
 // dark mode
 export const defaultDarkTheme = {
   ...defaultTheme,
-  primary_color: '#0A84FF',
-  secondary_color: '#FF9F0A',
-  primary_text: '#FFFFFF',
-  background_color: '#2E303D',
-  secondary_text: '#EBEBF599',
-  info_color: '#0A84FF',
-  error_color: '#FF453A',
-  warning_color: '#FF9F0A',
-  success_color: '#30D158',
+  primary_color: '#489AFD',
+  secondary_color: '#75BEFF',
+  primary_text: '#F8FAFC',
+  background_color: '#0F0F0F',
+  secondary_text: '#94A3B8',
+  info_color: '#5DAEFF',
+  error_color: '#F87171',
+  warning_color: '#FBBF24',
+  success_color: '#3DDC97',
 }

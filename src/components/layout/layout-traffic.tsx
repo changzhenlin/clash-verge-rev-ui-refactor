@@ -82,7 +82,7 @@ export const LayoutTraffic = () => {
       <Box sx={{ position: 'relative' }}>
         {trafficGraph && pageVisible && (
           <div
-            style={{ width: '100%', height: 60, marginBottom: 6 }}
+            style={{ width: '100%', height: 36, marginBottom: 6 }}
             onClick={trafficRef.current?.toggleStyle}
           >
             <TrafficGraph ref={trafficRef} />
