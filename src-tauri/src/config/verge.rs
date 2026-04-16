@@ -439,7 +439,7 @@ impl IVerge {
             webdav_username: None,
             webdav_password: None,
             #[cfg(target_os = "macos")]
-            enable_tray_speed: Some(false),
+            enable_tray_speed: Some(true),
             // enable_tray_icon: Some(true),
             tray_proxy_groups_display_mode: Some("default".into()),
             tray_inline_outbound_modes: Some(false),

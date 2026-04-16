@@ -46,16 +46,12 @@ import { BaseErrorBoundary } from '@/components/base'
 import { LayoutItem } from '@/components/layout/layout-item'
 import { NoticeManager } from '@/components/layout/notice-manager'
 import { WindowControls } from '@/components/layout/window-controller'
-import { useCurrentProxy } from '@/hooks/use-current-proxy'
 import { useI18n } from '@/hooks/use-i18n'
 import { useSystemProxyState } from '@/hooks/use-system-proxy-state'
-import { useTrafficData } from '@/hooks/use-traffic-data'
 import { useVerge } from '@/hooks/use-verge'
 import { useWindowDecorations } from '@/hooks/use-window'
 import { useThemeMode } from '@/services/states'
 import getSystem from '@/utils/get-system'
-import parseTraffic from '@/utils/parse-traffic'
-import delayManager from '@/services/delay'
 
 import {
   useCustomTheme,
@@ -135,20 +131,7 @@ const AppShellHeader = ({
   navigate: (path: string) => void
 }) => {
   const { t } = useTranslation()
-  const { currentProxy, primaryGroupName } = useCurrentProxy()
-  const {
-    response: { data: traffic },
-  } = useTrafficData()
   const { indicator, toggleSystemProxy } = useSystemProxyState()
-
-  const [up, upUnit] = parseTraffic(traffic?.up || 0)
-  const [down, downUnit] = parseTraffic(traffic?.down || 0)
-  const currentDelay =
-    currentProxy && primaryGroupName
-      ? delayManager.getDelayFix(currentProxy, primaryGroupName)
-      : -1
-  const activeNode = currentProxy?.name || primaryGroupName || 'No Active Proxy'
-  const latencyLabel = currentDelay > 0 ? `${currentDelay}ms` : '--'
 
   const handleToggleProxy = useCallback(() => {
     toggleSystemProxy(!indicator)
@@ -303,89 +286,6 @@ const AppShellHeader = ({
           ml: 'auto',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.2,
-            px: 1.5,
-            py: 0.85,
-            borderRadius: 2,
-            border: '1px solid rgba(255,255,255,0.05)',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            minWidth: 240,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <ArrowUpwardRounded sx={{ fontSize: 12, color: '#4ADE80' }} />
-            <Typography
-              sx={{
-                fontSize: 11,
-                color: 'rgba(255,255,255,0.7)',
-                fontFamily: 'monospace',
-                minWidth: 60,
-              }}
-            >
-              {`${up} ${upUnit}/s`}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <ArrowDownwardRounded sx={{ fontSize: 12, color: '#60A5FA' }} />
-            <Typography
-              sx={{
-                fontSize: 11,
-                color: 'rgba(255,255,255,0.7)',
-                fontFamily: 'monospace',
-                minWidth: 60,
-              }}
-            >
-              {`${down} ${downUnit}/s`}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Box
-              sx={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                backgroundColor: '#4ADE80',
-              }}
-            />
-            <Typography
-              sx={{
-                fontSize: 11,
-                color: 'rgba(255,255,255,0.7)',
-                fontFamily: 'monospace',
-                minWidth: 40,
-              }}
-            >
-              {latencyLabel}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            px: 1.5,
-            py: 0.85,
-            borderRadius: 2,
-            border: '1px solid rgba(255,255,255,0.05)',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-          }}
-        >
-          <Typography
-            sx={{
-              maxWidth: 150,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              fontSize: 12,
-              color: 'rgba(255,255,255,0.7)',
-            }}
-          >
-            {activeNode}
-          </Typography>
-        </Box>
         <Button
           variant="contained"
           disableElevation
@@ -420,191 +320,7 @@ const AppShellHeader = ({
   )
 }
 
-const AppShellSidebarMeta = () => {
-  const { currentProxy, primaryGroupName } = useCurrentProxy()
-  const activeNode = currentProxy?.name || primaryGroupName || 'No Active Proxy'
 
-  return (
-    <Box
-      className="layout-sidebar__meta"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1.25,
-        px: 1,
-        pb: 2,
-      }}
-    >
-      <Box
-        sx={{
-          width: 'fit-content',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 0.75,
-          px: 1.25,
-          py: 0.75,
-          borderRadius: 999,
-          border: '1px solid rgba(96,165,255,0.22)',
-          backgroundColor: 'rgba(20,36,64,0.85)',
-        }}
-      >
-        <Box
-          sx={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            backgroundColor: '#63d1ff',
-            boxShadow: '0 0 12px rgba(99, 209, 255, 0.55)',
-          }}
-        />
-        <Typography
-          sx={{
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: '0.02em',
-            color: '#d4e7ff',
-            textTransform: 'uppercase',
-          }}
-        >
-          Connected
-        </Typography>
-      </Box>
-
-      <Box>
-        <Typography
-          sx={{
-            fontSize: 21,
-            fontWeight: 700,
-            letterSpacing: '-0.03em',
-            color: 'rgba(255,255,255,0.94)',
-          }}
-        >
-          Workspace
-        </Typography>
-        <Typography
-          sx={{
-            mt: 0.75,
-            fontSize: 12,
-            lineHeight: 1.5,
-            color: 'rgba(255,255,255,0.52)',
-          }}
-        >
-          A calmer control surface for profiles, nodes, and network flow.
-        </Typography>
-      </Box>
-
-      <Box
-        sx={{
-          mt: 0.5,
-          px: 1.5,
-          py: 1.25,
-          borderRadius: 2.5,
-          border: '1px solid rgba(255,255,255,0.05)',
-          background:
-            'linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.02) 100%)',
-        }}
-      >
-        <Typography
-          sx={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', mb: 0.35 }}
-        >
-          Current route
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.92)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-          title={activeNode}
-        >
-          {activeNode}
-        </Typography>
-      </Box>
-    </Box>
-  )
-}
-
-const AppShellSidebarStatus = () => {
-  const { currentProxy, primaryGroupName } = useCurrentProxy()
-  const currentDelay =
-    currentProxy && primaryGroupName
-      ? delayManager.getDelayFix(currentProxy, primaryGroupName)
-      : -1
-
-  const progressValue =
-    currentDelay > 0 ? Math.max(18, Math.min(92, 100 - currentDelay / 3)) : 36
-
-  return (
-    <Box
-      className="layout-sidebar__status"
-      sx={{
-        mt: 2,
-        mx: 1,
-        px: 2,
-        py: 2,
-        borderRadius: 3,
-        border: '1px solid rgba(255,255,255,0.05)',
-        background:
-          'linear-gradient(180deg, rgba(22,26,38,0.96) 0%, rgba(15,18,28,0.96) 100%)',
-        boxShadow:
-          '0 16px 36px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.03)',
-      }}
-    >
-      <Typography
-        sx={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: 'rgba(255,255,255,0.92)',
-        }}
-      >
-        System integrity
-      </Typography>
-      <Typography
-        sx={{
-          mt: 1,
-          fontSize: 11,
-          lineHeight: 1.55,
-          color: 'rgba(255,255,255,0.52)',
-        }}
-      >
-        Ruleset synced recently. Core service is stable and DNS fallback stays
-        armed.
-      </Typography>
-      <Box
-        sx={{
-          mt: 1.75,
-          mb: 1,
-          height: 10,
-          borderRadius: 999,
-          backgroundColor: 'rgba(255,255,255,0.08)',
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            width: `${progressValue}%`,
-            height: '100%',
-            borderRadius: 999,
-            background:
-              'linear-gradient(90deg, rgba(72,154,253,0.92) 0%, rgba(117,190,255,0.92) 100%)',
-          }}
-        />
-      </Box>
-      <Typography
-        sx={{
-          fontSize: 11,
-          color: 'rgba(186,220,255,0.88)',
-          fontFamily: 'monospace',
-        }}
-      >
-        {currentDelay > 0 ? `Route health ${currentDelay}ms` : 'Route health --'}
-      </Typography>
-    </Box>
-  )
-}
 
 const Layout = () => {
   const mode = useThemeMode()

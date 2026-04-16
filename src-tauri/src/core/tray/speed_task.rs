@@ -1,39 +1,50 @@
 use crate::core::handle;
-use crate::process::AsyncHandler;
-use crate::utils::{connections_stream, tray_speed};
+use crate::utils::tray_speed;
 use crate::{Type, logging};
 use parking_lot::Mutex;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
 use std::time::Duration;
-use tauri::async_runtime::JoinHandle;
-use tauri_plugin_mihomo::models::ConnectionId;
+use tauri::tray::TrayIcon;
 
-/// 托盘速率流异常后的重连间隔。
-const TRAY_SPEED_RETRY_DELAY: Duration = Duration::from_secs(1);
-/// 托盘速率流运行时的空闲轮询间隔。
-const TRAY_SPEED_IDLE_POLL_INTERVAL: Duration = Duration::from_millis(200);
-/// 托盘速率流在此时间内收不到有效数据时，触发重连并降级到 0/0。
-const TRAY_SPEED_STALE_TIMEOUT: Duration = Duration::from_secs(5);
+/// 托盘网速采样间隔
+const TRAY_SPEED_SAMPLE_INTERVAL: Duration = Duration::from_secs(1);
+
+static TASK_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 /// macOS 托盘速率任务控制器。
 #[derive(Clone)]
 pub struct TraySpeedController {
-    speed_task: Arc<Mutex<Option<JoinHandle<()>>>>,
-    speed_connection_id: Arc<Mutex<Option<ConnectionId>>>,
+    task_id: u64,
+    running: Arc<AtomicBool>,
+    thread_handle: Arc<Mutex<Option<thread::JoinHandle<()>>>>,
 }
 
 impl Default for TraySpeedController {
     fn default() -> Self {
         Self {
-            speed_task: Arc::new(Mutex::new(None)),
-            speed_connection_id: Arc::new(Mutex::new(None)),
+            task_id: TASK_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
+            running: Arc::new(AtomicBool::new(false)),
+            thread_handle: Arc::new(Mutex::new(None)),
         }
     }
+}
+
+/// 重置速率显示缓存，强制下一次更新时重新渲染
+pub fn reset_display_cache() {
+    tray_speed::reset_last_display();
 }
 
 impl TraySpeedController {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// 强制重新显示网速（图标更新后调用）
+    pub fn force_redisplay(_tray: &TrayIcon) {
+        tray_speed::reset_last_display();
+        Self::apply_tray_speed(0, 0);
     }
 
     pub fn update_task(&self, enable_tray_speed: bool) {
@@ -44,116 +55,134 @@ impl TraySpeedController {
         }
     }
 
-    /// 启动托盘速率采集后台任务（基于 `/traffic` WebSocket 流）。
+    /// 启动托盘速率采集后台任务（基于系统网络接口监控）。
     fn start_task(&self) {
+        logging!(
+            info,
+            Type::Tray,
+            "[Task#{}] start_task() 被调用，running={}",
+            self.task_id,
+            self.running.load(Ordering::Relaxed)
+        );
+
         if handle::Handle::global().is_exiting() {
+            logging!(
+                warn,
+                Type::Tray,
+                "[Task#{}] 应用正在退出，取消启动托盘速率任务",
+                self.task_id
+            );
             return;
         }
 
-        // 关键步骤：托盘不可用时不启动速率任务，避免无效连接重试。
         if !Self::has_main_tray() {
-            logging!(warn, Type::Tray, "托盘不可用，跳过启动托盘速率任务");
+            logging!(
+                warn,
+                Type::Tray,
+                "[Task#{}] 托盘不可用，跳过启动托盘速率任务",
+                self.task_id
+            );
             return;
         }
 
-        let mut guard = self.speed_task.lock();
-        if guard.as_ref().is_some_and(|task| !task.inner().is_finished()) {
+        if self.running.load(Ordering::Relaxed) {
+            logging!(
+                info,
+                Type::Tray,
+                "[Task#{}] 托盘速率任务已在运行，无需重复启动",
+                self.task_id
+            );
             return;
         }
 
-        let speed_connection_id = Arc::clone(&self.speed_connection_id);
-        let task = AsyncHandler::spawn(move || async move {
-            loop {
+        logging!(
+            info,
+            Type::Tray,
+            "[Task#{}] 托盘网速显示任务启动成功，setting running=true",
+            self.task_id
+        );
+        self.running.store(true, Ordering::Relaxed);
+
+        let task_id = self.task_id;
+        let running = Arc::clone(&self.running);
+        let thread_handle = thread::spawn(move || {
+            let mut monitor = crate::utils::network_monitor::NetworkMonitor::new();
+            let mut iteration = 0u64;
+
+            while running.load(Ordering::Relaxed) {
+                iteration += 1;
+                logging!(info, Type::Tray, "[Task#{}] 托盘网速任务循环 #{}", task_id, iteration);
+
                 if handle::Handle::global().is_exiting() {
+                    logging!(
+                        warn,
+                        Type::Tray,
+                        "[Task#{}] 应用正在退出，退出托盘网速任务循环",
+                        task_id
+                    );
+                    running.store(false, Ordering::Relaxed);
                     break;
                 }
 
-                if !Self::has_main_tray() {
-                    logging!(warn, Type::Tray, "托盘已不可用，停止托盘速率任务");
-                    break;
-                }
+                let (up, down) = monitor.get_speed();
+                logging!(
+                    info,
+                    Type::Tray,
+                    "[Task#{}] 系统网络监控: 上行={} 字节/秒, 下行={} 字节/秒",
+                    task_id,
+                    up,
+                    down
+                );
+                Self::apply_tray_speed(up, down);
 
-                let stream_connect_result = connections_stream::connect_traffic_stream().await;
-                let mut speed_stream = match stream_connect_result {
-                    Ok(stream) => stream,
-                    Err(err) => {
-                        logging!(debug, Type::Tray, "托盘速率流连接失败，稍后重试: {err}");
-                        Self::apply_tray_speed(0, 0);
-                        tokio::time::sleep(TRAY_SPEED_RETRY_DELAY).await;
-                        continue;
-                    }
-                };
-
-                Self::set_speed_connection_id(&speed_connection_id, Some(speed_stream.connection_id));
-
-                loop {
-                    let next_state = speed_stream
-                        .next_event(TRAY_SPEED_IDLE_POLL_INTERVAL, TRAY_SPEED_STALE_TIMEOUT, || {
-                            handle::Handle::global().is_exiting()
-                        })
-                        .await;
-
-                    match next_state {
-                        connections_stream::StreamConsumeState::Event(speed_event) => {
-                            Self::apply_tray_speed(speed_event.up, speed_event.down);
-                        }
-                        connections_stream::StreamConsumeState::Stale => {
-                            logging!(debug, Type::Tray, "托盘速率流长时间未收到有效数据，触发重连");
-                            Self::apply_tray_speed(0, 0);
-                            break;
-                        }
-                        connections_stream::StreamConsumeState::Closed
-                        | connections_stream::StreamConsumeState::ExitRequested => {
-                            break;
-                        }
-                    }
-                }
-
-                Self::disconnect_speed_connection(&speed_connection_id).await;
-
-                if handle::Handle::global().is_exiting() || !Self::has_main_tray() {
-                    break;
-                }
-
-                // Stale 分支在内层 loop 中已重置为 0/0；此处兜底 Closed 分支（流被远端关闭）。
-                Self::apply_tray_speed(0, 0);
-                tokio::time::sleep(TRAY_SPEED_RETRY_DELAY).await;
+                logging!(
+                    info,
+                    Type::Tray,
+                    "[Task#{}] 等待 {} 秒后继续下一次采样",
+                    task_id,
+                    TRAY_SPEED_SAMPLE_INTERVAL.as_secs()
+                );
+                thread::sleep(TRAY_SPEED_SAMPLE_INTERVAL);
+                logging!(
+                    info,
+                    Type::Tray,
+                    "[Task#{}] 睡眠结束，继续循环，running={}",
+                    task_id,
+                    running.load(Ordering::Relaxed)
+                );
             }
 
-            Self::set_speed_connection_id(&speed_connection_id, None);
+            logging!(
+                warn,
+                Type::Tray,
+                "[Task#{}] 托盘网速任务循环退出，总迭代次数: {}, running={}",
+                task_id,
+                iteration,
+                running.load(Ordering::Relaxed)
+            );
         });
 
-        *guard = Some(task);
+        *self.thread_handle.lock() = Some(thread_handle);
     }
 
     /// 停止托盘速率采集后台任务并清除速率显示。
     fn stop_task(&self) {
-        // 取出任务句柄，与 speed_connection_id 一同传入清理任务。
-        let task = self.speed_task.lock().take();
-        let speed_connection_id = Arc::clone(&self.speed_connection_id);
+        logging!(
+            warn,
+            Type::Tray,
+            "[Task#{}] stop_task() 被调用, caller thread={:?}",
+            self.task_id,
+            std::thread::current().id()
+        );
+        self.running.store(false, Ordering::Relaxed);
 
-        AsyncHandler::spawn(move || async move {
-            // 关键步骤：先等待 abort 完成，再断开 WebSocket 连接。
-            // 若直接 abort 后立即 disconnect，任务可能已通过 take 取走 connection_id
-            // 但尚未完成断开，导致 connection_id 丢失、连接泄漏。
-            // await task handle 可保证原任务已退出，connection_id 不再被占用。
-            if let Some(task) = task {
-                task.abort();
-                let _ = task.await;
-            }
-            Self::disconnect_speed_connection(&speed_connection_id).await;
-        });
+        if let Some(handle) = self.thread_handle.lock().take() {
+            let _ = handle.join();
+        }
 
-        let app_handle = handle::Handle::app_handle();
-        if let Some(tray) = app_handle.tray_by_id("main") {
-            let result = tray.with_inner_tray_icon(|inner| {
-                if let Some(status_item) = inner.ns_status_item() {
-                    tray_speed::clear_speed_attributed_title(&status_item);
-                }
-            });
-            if let Err(err) = result {
-                logging!(warn, Type::Tray, "清除富文本速率失败: {err}");
-            }
+        Self::apply_tray_speed(0, 0);
+        if let Some(tray) = handle::Handle::app_handle().tray_by_id("main") {
+            tray_speed::clear_speed_attributed_title(&tray);
         }
     }
 
@@ -161,34 +190,18 @@ impl TraySpeedController {
         handle::Handle::app_handle().tray_by_id("main").is_some()
     }
 
-    fn set_speed_connection_id(
-        speed_connection_id: &Arc<Mutex<Option<ConnectionId>>>,
-        connection_id: Option<ConnectionId>,
-    ) {
-        *speed_connection_id.lock() = connection_id;
-    }
-
-    fn take_speed_connection_id(speed_connection_id: &Arc<Mutex<Option<ConnectionId>>>) -> Option<ConnectionId> {
-        speed_connection_id.lock().take()
-    }
-
-    async fn disconnect_speed_connection(speed_connection_id: &Arc<Mutex<Option<ConnectionId>>>) {
-        if let Some(connection_id) = Self::take_speed_connection_id(speed_connection_id) {
-            connections_stream::disconnect_connection(connection_id).await;
-        }
-    }
-
     fn apply_tray_speed(up: u64, down: u64) {
-        let app_handle = handle::Handle::app_handle();
-        if let Some(tray) = app_handle.tray_by_id("main") {
-            let result = tray.with_inner_tray_icon(move |inner| {
-                if let Some(status_item) = inner.ns_status_item() {
-                    tray_speed::set_speed_attributed_title(&status_item, up, down);
-                }
-            });
-            if let Err(err) = result {
-                logging!(warn, Type::Tray, "设置富文本速率失败: {err}");
-            }
+        logging!(
+            debug,
+            Type::Tray,
+            "更新托盘网速: 上行={} 字节/秒, 下行={} 字节/秒",
+            up,
+            down
+        );
+        if let Some(tray) = handle::Handle::app_handle().tray_by_id("main") {
+            tray_speed::set_speed_attributed_title(&tray, up, down);
+        } else {
+            logging!(warn, Type::Tray, "无法获取托盘实例，网速显示失败");
         }
     }
 }

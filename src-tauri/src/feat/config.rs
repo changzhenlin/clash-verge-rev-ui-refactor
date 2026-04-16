@@ -240,8 +240,8 @@ async fn process_terminated_flags(update_flags: UpdateFlags, patch: &IVerge) -> 
             .update_icon(&Config::verge().await.latest_arc())
             .await?;
         #[cfg(target_os = "macos")]
-        if patch.enable_tray_speed.is_some() {
-            tray::Tray::global().update_speed_task(patch.enable_tray_speed.unwrap_or(false));
+        if let Some(enable_tray_speed) = patch.enable_tray_speed {
+            tray::Tray::global().update_speed_task(enable_tray_speed);
         }
     }
     if update_flags.contains(UpdateFlags::SYSTRAY_TOOLTIP) {

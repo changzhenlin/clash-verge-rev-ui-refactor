@@ -142,9 +142,14 @@ impl Tray {
         match self.create_tray_from_handle(app_handle).await {
             Ok(_) => {
                 logging!(info, Type::Tray, "System tray created successfully");
+
+                #[cfg(target_os = "macos")]
+                {
+                    logging!(info, Type::Tray, "macOS托盘初始化完成，强制启动网速显示任务");
+                    self.speed_controller.update_task(true);
+                }
             }
             Err(e) => {
-                // Don't return error, let application continue running without tray
                 logging!(
                     warn,
                     Type::Tray,
@@ -256,6 +261,13 @@ impl Tray {
         {
             let is_colorful = verge.tray_icon.as_deref().unwrap_or("monochrome") == "colorful";
             logging_error!(Type::Tray, tray.set_icon_as_template(!is_colorful));
+
+            if verge.enable_tray_speed.unwrap_or(false) {
+                logging!(debug, Type::Tray, "图标更新后重置速率显示缓存，确保网速文本重新渲染");
+                speed_task::reset_display_cache();
+                // 关键：图标更新后需要重新设置 title，因为 setImage 可能会影响 title 显示
+                speed_task::TraySpeedController::force_redisplay(&tray);
+            }
         }
 
         Ok(())
@@ -333,7 +345,7 @@ impl Tray {
         self.update_menu().await?;
         self.update_icon(&verge).await?;
         #[cfg(target_os = "macos")]
-        self.update_speed_task(verge.enable_tray_speed.unwrap_or(false));
+        self.update_speed_task(verge.enable_tray_speed.unwrap_or(true));
         self.update_tooltip().await?;
         Ok(())
     }
@@ -381,6 +393,16 @@ impl Tray {
         let tray = builder.build(app_handle)?;
         tray.on_tray_icon_event(on_tray_icon_event);
         tray.on_menu_event(on_menu_event);
+
+        #[cfg(target_os = "macos")]
+        {
+            let enable_tray_speed = verge.enable_tray_speed.unwrap_or(false);
+            if enable_tray_speed {
+                logging!(info, Type::Tray, "托盘创建完成，启用macOS托盘网速显示");
+                self.speed_controller.update_task(true);
+            }
+        }
+
         Ok(())
     }
 
@@ -395,6 +417,12 @@ impl Tray {
     /// 根据配置统一更新托盘速率采集任务状态（macOS）
     #[cfg(target_os = "macos")]
     pub fn update_speed_task(&self, enable_tray_speed: bool) {
+        logging!(
+            info,
+            Type::Tray,
+            "update_speed_task 被调用，enable_tray_speed={}",
+            enable_tray_speed
+        );
         self.speed_controller.update_task(enable_tray_speed);
     }
 }

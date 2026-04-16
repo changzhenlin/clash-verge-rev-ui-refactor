@@ -53,7 +53,16 @@ struct TrafficPayload {
 }
 
 fn parse_traffic_event(data: Value) -> Option<InternalWsEvent<TrafficSpeedEvent>> {
+    logging!(debug, Type::Tray, "收到原始流量数据: {}", data);
+
     if let Ok(payload) = serde_json::from_value::<TrafficPayload>(data.clone()) {
+        logging!(
+            info,
+            Type::Tray,
+            "解析流量数据成功: up={}, down={}",
+            payload.up,
+            payload.down
+        );
         return Some(InternalWsEvent::Data(TrafficSpeedEvent {
             up: payload.up,
             down: payload.down,
@@ -63,16 +72,31 @@ fn parse_traffic_event(data: Value) -> Option<InternalWsEvent<TrafficSpeedEvent>
     if let Ok(ws_message) = WebSocketMessage::deserialize(&data) {
         match ws_message {
             WebSocketMessage::Text(text) => {
+                logging!(debug, Type::Tray, "收到文本消息: {}", text);
                 let payload = serde_json::from_str::<TrafficPayload>(&text).ok()?;
+                logging!(
+                    info,
+                    Type::Tray,
+                    "解析文本消息成功: up={}, down={}",
+                    payload.up,
+                    payload.down
+                );
                 Some(InternalWsEvent::Data(TrafficSpeedEvent {
                     up: payload.up,
                     down: payload.down,
                 }))
             }
-            WebSocketMessage::Close(_) => Some(InternalWsEvent::Closed),
-            _ => None,
+            WebSocketMessage::Close(_) => {
+                logging!(warn, Type::Tray, "收到 WebSocket 关闭消息");
+                Some(InternalWsEvent::Closed)
+            }
+            _ => {
+                logging!(debug, Type::Tray, "收到未知消息类型");
+                None
+            }
         }
     } else {
+        logging!(debug, Type::Tray, "无法解析流量数据");
         None
     }
 }

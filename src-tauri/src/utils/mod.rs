@@ -6,6 +6,8 @@ pub mod init;
 #[cfg(target_os = "linux")]
 pub mod linux;
 pub mod network;
+#[cfg(target_os = "macos")]
+pub mod network_monitor;
 pub mod notification;
 pub mod resolve;
 #[cfg(target_os = "windows")]
