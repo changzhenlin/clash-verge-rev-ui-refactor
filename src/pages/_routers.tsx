@@ -1,6 +1,5 @@
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded'
 import ForkRightRoundedIcon from '@mui/icons-material/ForkRightRounded'
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded'
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded'
 import LockOpenRoundedIcon from '@mui/icons-material/LockOpenRounded'
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded'
@@ -19,6 +18,7 @@ import UnlockSvg from '@/assets/image/itemicon/unlock.svg?react'
 
 import Layout from './_layout'
 import ConnectionsPage from './connections'
+import DashboardPage from './dashboard'
 import ProfilesPage from './profiles'
 import ProxiesPage from './proxies'
 import RulesPage from './rules'
@@ -27,9 +27,17 @@ import UnlockPage from './unlock'
 
 export const navItems = [
   {
+    displayLabel: 'Dashboard',
+    label: 'Dashboard',
+    path: '/',
+    section: 'primary',
+    icon: [<HomeSvg key="svg" />],
+    Component: DashboardPage,
+  },
+  {
     displayLabel: 'Proxies',
     label: 'layout.components.navigation.tabs.proxies',
-    path: '/',
+    path: '/proxies',
     section: 'primary',
     icon: [<WifiRoundedIcon key="mui" />, <ProxiesSvg key="svg" />],
     Component: ProxiesPage,
@@ -37,7 +45,7 @@ export const navItems = [
   {
     displayLabel: 'Profiles',
     label: 'layout.components.navigation.tabs.profiles',
-    path: '/profile',
+    path: '/profiles',
     section: 'primary',
     icon: [<DnsRoundedIcon key="mui" />, <ProfilesSvg key="svg" />],
     Component: ProfilesPage,
