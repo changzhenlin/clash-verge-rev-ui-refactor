@@ -176,7 +176,8 @@ impl TraySpeedController {
         );
         self.running.store(false, Ordering::Relaxed);
 
-        if let Some(handle) = self.thread_handle.lock().take() {
+        let value = self.thread_handle.lock().take();
+        if let Some(handle) = value {
             let _ = handle.join();
         }
 

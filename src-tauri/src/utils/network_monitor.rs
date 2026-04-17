@@ -18,8 +18,14 @@ pub struct NetworkMonitor {
     last_snapshot: Option<(InterfaceSnapshot, Instant)>,
 }
 
+impl Default for NetworkMonitor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NetworkMonitor {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { last_snapshot: None }
     }
 
