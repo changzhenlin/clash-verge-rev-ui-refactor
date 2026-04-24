@@ -176,7 +176,8 @@ const DashboardShell = styled(Box, {
   '--dashboard-label-gap': '14px',
   position: 'relative',
   width: '100%',
-  minHeight: '100vh',
+  height: '100%',
+  boxSizing: 'border-box',
   display: 'grid',
   placeItems: 'center',
   overflow: 'hidden',
@@ -604,7 +605,6 @@ const CoreButton = styled(IconButton, {
     `transform ${dashboardMotion.soft}`,
     `filter ${dashboardMotion.fluid}`,
   ].join(','),
-  animation: active ? `${corePulse} 4.8s ease-in-out infinite` : 'none',
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -631,7 +631,7 @@ const CoreButton = styled(IconButton, {
     transition: `border-color ${dashboardMotion.fluid}, box-shadow ${dashboardMotion.fluid}`,
   },
   '&:hover': {
-    transform: active ? 'scale(1.03)' : 'scale(1.02)',
+    transform: active ? 'scale(1.08)' : 'scale(1.06)',
   },
   '&:active': {
     transform: 'scale(0.985)',
@@ -686,6 +686,7 @@ const CoreSurface = styled(Box, {
         'inset 0 -36px 48px rgba(0, 0, 0, 0.34)',
       ].join(','),
   backdropFilter: 'blur(18px) saturate(150%)',
+  animation: active ? `${corePulse} 4.8s ease-in-out infinite` : 'none',
   transition: [
     `background ${dashboardMotion.fluid}`,
     `border-color ${dashboardMotion.fluid}`,
