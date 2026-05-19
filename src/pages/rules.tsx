@@ -1,4 +1,5 @@
-import { Box } from '@mui/material'
+import AddRounded from '@mui/icons-material/AddRounded'
+import { Box, IconButton, Tooltip } from '@mui/material'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -10,17 +11,21 @@ import {
   type VirtualListHandle,
 } from '@/components/base'
 import { ScrollTopButton } from '@/components/layout/scroll-top-button'
+import { RulesEditorViewer } from '@/components/profile/rules-editor-viewer'
 import { ProviderButton } from '@/components/rule/provider-button'
 import RuleItem from '@/components/rule/rule-item'
+import { useProfiles } from '@/hooks/use-profiles'
 import { useVisibility } from '@/hooks/use-visibility'
 import { useAppData } from '@/providers/app-data-context'
 
 const RulesPage = () => {
   const { t } = useTranslation()
   const { rules = [], refreshRules, refreshRuleProviders } = useAppData()
+  const { current, mutateProfiles } = useProfiles()
   const [match, setMatch] = useState(() => (_: string) => true)
   const virtuosoRef = useRef<VirtualListHandle>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(false)
   const pageVisible = useVisibility()
 
   // 在组件挂载时和页面获得焦点时刷新规则数据
@@ -65,6 +70,17 @@ const RulesPage = () => {
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ProviderButton />
+          {current && (
+            <Tooltip title={t('rules.modals.editor.title')}>
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={() => setEditorOpen(true)}
+              >
+                <AddRounded />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       }
     >
@@ -95,6 +111,20 @@ const RulesPage = () => {
         </>
       ) : (
         <BaseEmpty />
+      )}
+
+      {editorOpen && current && (
+        <RulesEditorViewer
+          groupsUid={current.option?.groups ?? ''}
+          mergeUid={current.option?.merge ?? ''}
+          profileUid={current.uid}
+          property={current.option?.rules ?? ''}
+          open={true}
+          onSave={() => {
+            refreshRules()
+          }}
+          onClose={() => setEditorOpen(false)}
+        />
       )}
     </BasePage>
   )
