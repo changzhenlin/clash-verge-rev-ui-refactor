@@ -7,7 +7,15 @@ import SettingSystem from '@/components/setting/setting-system'
 import SettingVergeAdvanced from '@/components/setting/setting-verge-advanced'
 import SettingVergeBasic from '@/components/setting/setting-verge-basic'
 import { showNotice } from '@/services/notice-service'
-import { useThemeMode } from '@/services/states'
+import { retroColors as c } from '@/styles/retro-theme'
+
+const retroCardSx = {
+  borderRadius: '4px',
+  border: `1px solid ${c.borderMid}`,
+  background: `linear-gradient(180deg, ${c.creamDark} 0%, #d8d0c0 100%)`,
+  boxShadow: `inset 0 1px 0 ${c.highlight}, 0 2px 6px ${c.insetShadow}`,
+  padding: 0,
+}
 
 const SettingPage = () => {
   const { t } = useTranslation()
@@ -16,9 +24,6 @@ const SettingPage = () => {
     showNotice.error(err)
   }
 
-  const mode = useThemeMode()
-  const isDark = mode === 'light' ? false : true
-
   return (
     <BasePage>
 
@@ -26,38 +31,26 @@ const SettingPage = () => {
         <Grid size={6}>
           <Box
             sx={{
-              borderRadius: 2,
+              ...retroCardSx,
               marginBottom: 1.5,
-              backgroundColor: isDark ? '#282a36' : '#ffffff',
             }}
           >
             <SettingSystem onError={onError} />
           </Box>
-          <Box
-            sx={{
-              borderRadius: 2,
-              backgroundColor: isDark ? '#282a36' : '#ffffff',
-            }}
-          >
+          <Box sx={retroCardSx}>
             <SettingClash onError={onError} />
           </Box>
         </Grid>
         <Grid size={6}>
           <Box
             sx={{
-              borderRadius: 2,
+              ...retroCardSx,
               marginBottom: 1.5,
-              backgroundColor: isDark ? '#282a36' : '#ffffff',
             }}
           >
             <SettingVergeBasic onError={onError} />
           </Box>
-          <Box
-            sx={{
-              borderRadius: 2,
-              backgroundColor: isDark ? '#282a36' : '#ffffff',
-            }}
-          >
+          <Box sx={retroCardSx}>
             <SettingVergeAdvanced onError={onError} />
           </Box>
         </Grid>

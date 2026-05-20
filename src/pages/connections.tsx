@@ -24,6 +24,7 @@ import {
   BaseStyledSelect,
   VirtualList,
 } from '@/components/base'
+import { retroColors as c, retroFonts, grainBg, retroSx } from '@/styles/retro-theme'
 import {
   ConnectionDetail,
   ConnectionDetailRef,
@@ -135,20 +136,23 @@ const ConnectionsPage = () => {
         overflow: 'hidden',
         borderRadius: '8px',
         minHeight: 0,
+        background: `linear-gradient(180deg, ${c.panelBg} 0%, ${c.creamDark} 100%)`,
+        backgroundImage: grainBg,
       }}
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ mx: 1 }}>
+          <Box sx={{ mx: 1, fontFamily: retroFonts.mono, fontSize: 11, color: c.textLight, letterSpacing: '0.04em' }}>
             {t('shared.labels.downloaded')}:{' '}
             {parseTraffic(connections?.downloadTotal)}
           </Box>
-          <Box sx={{ mx: 1 }}>
+          <Box sx={{ mx: 1, fontFamily: retroFonts.mono, fontSize: 11, color: c.textLight, letterSpacing: '0.04em' }}>
             {t('shared.labels.uploaded')}:{' '}
             {parseTraffic(connections?.uploadTotal)}
           </Box>
           <IconButton
             color="inherit"
             size="small"
+            sx={{ color: c.textLight, '&:hover': { bgcolor: 'rgba(255,255,250,0.1)' } }}
             onClick={() =>
               setSetting((o) =>
                 o?.layout !== 'table'
@@ -163,7 +167,18 @@ const ConnectionsPage = () => {
               <TableChartRounded titleAccess={t('shared.actions.tableView')} />
             )}
           </IconButton>
-          <Button size="small" variant="contained" onClick={onCloseAll}>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={onCloseAll}
+            sx={{
+              ...retroSx.retroButton,
+              fontSize: 10,
+              px: 1.5,
+              py: 0.25,
+              minHeight: 0,
+            }}
+          >
             <span style={{ whiteSpace: 'nowrap' }}>
               {t('shared.actions.closeAll')}
             </span>
@@ -184,9 +199,29 @@ const ConnectionsPage = () => {
           position: 'sticky',
           top: 0,
           zIndex: 2,
+          borderBottom: `1px solid ${c.borderLight}`,
+          pb: 1,
         }}
       >
-        <ButtonGroup sx={{ mr: 1, flexBasis: 'content' }}>
+        <ButtonGroup sx={{
+          mr: 1,
+          flexBasis: 'content',
+          '& .MuiButton-root': {
+            ...retroSx.retroButton,
+            fontSize: 10,
+            px: 1.5,
+            py: 0.25,
+            minHeight: 0,
+            borderColor: c.borderDark,
+          },
+          '& .MuiButton-contained': {
+            ...retroSx.retroButtonContained,
+            fontSize: 10,
+            px: 1.5,
+            py: 0.25,
+            minHeight: 0,
+          },
+        }}>
           <Button
             size="small"
             variant={connectionsType === 'active' ? 'contained' : 'outlined'}
@@ -208,10 +243,11 @@ const ConnectionsPage = () => {
           <BaseStyledSelect
             value={curOrderOpt}
             onChange={(e) => setCurOrderOpt(e.target.value as OrderKey)}
+            sx={retroSx.retroSelect}
           >
             {ORDER_OPTIONS.map((option) => (
               <MenuItem key={option.id} value={option.id}>
-                <span style={{ fontSize: 14 }}>{t(option.labelKey)}</span>
+                <span style={{ fontSize: 11, fontFamily: retroFonts.mono, color: c.text }}>{t(option.labelKey)}</span>
               </MenuItem>
             ))}
           </BaseStyledSelect>
@@ -223,6 +259,9 @@ const ConnectionsPage = () => {
             alignItems: 'center',
             '& > *': {
               flex: 1,
+            },
+            '& .MuiOutlinedInput-root': {
+              ...retroSx.retroInput,
             },
           }}
         >
@@ -278,11 +317,18 @@ const ConnectionsPage = () => {
             position: 'absolute',
             right: 16,
             bottom: isTableLayout ? 70 : 16,
+            ...retroSx.retroButtonContained,
+            fontSize: 12,
+            px: 2,
+            py: 1,
+            borderRadius: '20px',
+            '&:hover': {
+              ...retroSx.retroButtonContained['&:hover'],
+            },
           }}
-          color="primary"
           onClick={() => clearClosedConnections()}
         >
-          <DeleteForeverRounded sx={{ mr: 1 }} fontSize="small" />
+          <DeleteForeverRounded sx={{ mr: 1, color: c.textLight }} fontSize="small" />
           {t('shared.actions.clear')}
         </Fab>
       </Zoom>
