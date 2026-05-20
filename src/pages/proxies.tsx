@@ -15,7 +15,6 @@ import {
   patchClashMode,
   updateProxyChainConfigInRuntime,
 } from '@/services/cmds'
-import { retroColors, retroFonts, retroSx } from '@/styles/retro-theme'
 import { debugLog } from '@/utils/debug'
 
 const MODES = ['rule', 'global', 'direct'] as const
@@ -133,7 +132,6 @@ const ProxyPage = () => {
       full
       contentStyle={{
         height: '101.5%',
-        background: `linear-gradient(180deg, ${retroColors.panelBg} 0%, ${retroColors.creamDark} 100%)`,
       }}
       title={
         isChainMode
@@ -144,34 +142,13 @@ const ProxyPage = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ProviderButton />
 
-          <ButtonGroup
-            size="small"
-            sx={{
-              '& .MuiButtonGroup-grouped': {
-                borderColor: retroColors.borderDark,
-              },
-            }}
-          >
+          <ButtonGroup size="small">
             {modeList.map((mode) => (
               <Button
                 key={mode}
                 variant={mode === curMode ? 'contained' : 'outlined'}
                 onClick={() => onChangeMode(mode)}
-                sx={
-                  mode === curMode
-                    ? {
-                        ...retroSx.retroButtonContained,
-                        px: 1.5,
-                        py: 0.25,
-                        minWidth: 0,
-                      }
-                    : {
-                        ...retroSx.retroButton,
-                        px: 1.5,
-                        py: 0.25,
-                        minWidth: 0,
-                      }
-                }
+                sx={{ px: 1.5, py: 0.25, minWidth: 0, textTransform: 'none' }}
               >
                 {t(`proxies.page.modes.${mode}`)}
               </Button>
@@ -182,21 +159,7 @@ const ProxyPage = () => {
             size="small"
             variant={isChainMode ? 'contained' : 'outlined'}
             onClick={onToggleChainMode}
-            sx={
-              isChainMode
-                ? {
-                    ...retroSx.retroButtonContained,
-                    ml: 1,
-                    px: 1.5,
-                    py: 0.25,
-                  }
-                : {
-                    ...retroSx.retroButton,
-                    ml: 1,
-                    px: 1.5,
-                    py: 0.25,
-                  }
-            }
+            sx={{ ml: 1, px: 1.5, py: 0.25, textTransform: 'none' }}
             startIcon={
               isChainMode ? (
                 <LanRounded fontSize="small" />

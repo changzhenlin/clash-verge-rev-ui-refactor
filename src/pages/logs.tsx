@@ -19,7 +19,6 @@ import {
 import LogItem from '@/components/log/log-item'
 import { useClashLog } from '@/hooks/use-clash-log'
 import { useLogData } from '@/hooks/use-log-data'
-import { retroColors as c, retroFonts, grainBg, retroSx } from '@/styles/retro-theme'
 
 const LogPage = () => {
   const { t } = useTranslation()
@@ -96,8 +95,6 @@ const LogPage = () => {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'auto',
-        background: `linear-gradient(180deg, ${c.cream} 0%, ${c.creamDark} 100%)`,
-        backgroundImage: grainBg,
       }}
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -145,10 +142,10 @@ const LogPage = () => {
             size="small"
             variant="contained"
             sx={{
-              ...retroSx.retroButtonContained,
               px: 2,
               py: 0.5,
               minWidth: 'auto',
+              textTransform: 'none',
             }}
             onClick={() => {
               refreshGetClashLog(true)
@@ -168,18 +165,13 @@ const LogPage = () => {
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          '& .MuiSelect-root, & .MuiInputBase-root': {
-            fontFamily: retroFonts.mono,
-            fontSize: 11,
-            color: c.text,
-          },
         }}
       >
         <BaseStyledSelect
           value={logState}
           onChange={(e) => handleLogLevelChange(e.target.value as LogFilter)}
           sx={{
-            ...retroSx.retroSelect,
+            fontSize: 13,
           }}
         >
           <MenuItem value="all">{t('shared.filters.logLevels.all')}</MenuItem>

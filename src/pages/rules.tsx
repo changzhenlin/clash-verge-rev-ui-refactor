@@ -17,7 +17,6 @@ import RuleItem from '@/components/rule/rule-item'
 import { useProfiles } from '@/hooks/use-profiles'
 import { useVisibility } from '@/hooks/use-visibility'
 import { useAppData } from '@/providers/app-data-context'
-import { retroColors as c, retroFonts, grainBg, retroSx } from '@/styles/retro-theme'
 
 const RulesPage = () => {
   const { t } = useTranslation()
@@ -67,8 +66,6 @@ const RulesPage = () => {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'auto',
-        background: `linear-gradient(180deg, ${c.cream} 0%, ${c.creamDark} 100%)`,
-        backgroundImage: grainBg,
       }}
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -95,7 +92,6 @@ const RulesPage = () => {
           height: '36px',
           display: 'flex',
           alignItems: 'center',
-          ...retroSx.insetBox,
           padding: '4px 10px',
         }}
       >

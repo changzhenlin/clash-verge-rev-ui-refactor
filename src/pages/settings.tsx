@@ -7,13 +7,13 @@ import SettingSystem from '@/components/setting/setting-system'
 import SettingVergeAdvanced from '@/components/setting/setting-verge-advanced'
 import SettingVergeBasic from '@/components/setting/setting-verge-basic'
 import { showNotice } from '@/services/notice-service'
-import { retroColors as c } from '@/styles/retro-theme'
 
-const retroCardSx = {
-  borderRadius: '4px',
-  border: `1px solid ${c.borderMid}`,
-  background: `linear-gradient(180deg, ${c.creamDark} 0%, #d8d0c0 100%)`,
-  boxShadow: `inset 0 1px 0 ${c.highlight}, 0 2px 6px ${c.insetShadow}`,
+const cardSx = {
+  borderRadius: '12px',
+  border: '1px solid',
+  borderColor: 'divider',
+  background: '#ffffff',
+  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
   padding: 0,
 }
 
@@ -31,26 +31,26 @@ const SettingPage = () => {
         <Grid size={6}>
           <Box
             sx={{
-              ...retroCardSx,
+              ...cardSx,
               marginBottom: 1.5,
             }}
           >
             <SettingSystem onError={onError} />
           </Box>
-          <Box sx={retroCardSx}>
+          <Box sx={cardSx}>
             <SettingClash onError={onError} />
           </Box>
         </Grid>
         <Grid size={6}>
           <Box
             sx={{
-              ...retroCardSx,
+              ...cardSx,
               marginBottom: 1.5,
             }}
           >
             <SettingVergeBasic onError={onError} />
           </Box>
-          <Box sx={retroCardSx}>
+          <Box sx={cardSx}>
             <SettingVergeAdvanced onError={onError} />
           </Box>
         </Grid>

@@ -64,7 +64,6 @@ import {
 import { showNotice } from '@/services/notice-service'
 import { queryClient } from '@/services/query-client'
 import { useSetLoadingCache } from '@/services/states'
-import { retroColors as c, grainBg, retroSx } from '@/styles/retro-theme'
 import { debugLog } from '@/utils/debug'
 
 // 记录profile切换状态
@@ -738,7 +737,6 @@ const ProfilePage = () => {
     }
   })
 
-  const dividercolor = c.borderLight
 
   // 监听后端配置变更
   useEffect(() => {
@@ -943,11 +941,10 @@ const ProfilePage = () => {
           }}
           placeholder={t('profiles.page.importForm.placeholder')}
           sx={{
-            ...retroSx.retroInput,
             flex: 1,
             '& .MuiOutlinedInput-root': {
-              ...retroSx.retroInput,
               height: '32px',
+              borderRadius: '8px',
             },
           }}
           slotProps={{
@@ -956,7 +953,7 @@ const ProfilePage = () => {
               endAdornment: !url ? (
                 <IconButton
                   size="small"
-                  sx={{ p: 0.5, color: c.textMuted }}
+                  sx={{ p: 0.5, color: 'text.secondary' }}
                   title={t('profiles.page.importForm.actions.paste')}
                   onClick={onCopyLink}
                 >
@@ -965,7 +962,7 @@ const ProfilePage = () => {
               ) : (
                 <IconButton
                   size="small"
-                  sx={{ p: 0.5, color: c.textMuted }}
+                  sx={{ p: 0.5, color: 'text.secondary' }}
                   title={t('shared.actions.clear')}
                   onClick={() => setUrl('')}
                 >
@@ -980,7 +977,7 @@ const ProfilePage = () => {
           loading={loading}
           variant="contained"
           size="small"
-          sx={{ ...retroSx.retroButtonContained, borderRadius: '4px', minWidth: 64, height: '30px' }}
+          sx={{ borderRadius: '8px', minWidth: 64, height: '30px', textTransform: 'none' }}
           onClick={onImport}
         >
           {t('profiles.page.actions.import')}
@@ -988,7 +985,7 @@ const ProfilePage = () => {
         <Button
           variant="contained"
           size="small"
-          sx={{ ...retroSx.retroButtonContained, borderRadius: '4px', minWidth: 54, height: '30px' }}
+          sx={{ borderRadius: '8px', minWidth: 54, height: '30px', textTransform: 'none' }}
           onClick={() => viewerRef.current?.create()}
         >
           {t('shared.actions.new')}
@@ -1006,8 +1003,6 @@ const ProfilePage = () => {
             pr: '10px',
             height: 'calc(100% - 48px)',
             overflowY: 'auto',
-            background: `linear-gradient(180deg, ${c.panelBg} 0%, ${c.creamDark} 100%)`,
-            backgroundImage: grainBg,
           }}
         >
           <Box sx={{ mb: 1.5 }}>
