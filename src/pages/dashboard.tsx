@@ -6,7 +6,7 @@ import SettingsRounded from '@mui/icons-material/SettingsRounded'
 import SubjectRounded from '@mui/icons-material/SubjectRounded'
 import WifiRounded from '@mui/icons-material/WifiRounded'
 import { Box, ButtonBase, Typography } from '@mui/material'
-import { styled } from '@mui/material/styles'
+import { keyframes, styled } from '@mui/material/styles'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
@@ -53,249 +53,148 @@ const menuItems: MenuItem[] = [
 ]
 
 const c = {
-  toolbarTop: '#c8c8c8',
-  toolbarBot: '#a0a0a0',
-  toolbarBorder: '#888',
-  panelBg: '#ececec',
-  panelInset: '#e0e0e0',
-  sidebarBg: '#e4e4e4',
-  border: '#b0b0b0',
-  borderLight: '#c8c8c8',
-  borderDark: '#999',
-  text: '#333',
-  textMuted: '#666',
-  textDim: '#888',
-  white: '#fff',
-  insetShadow: 'rgba(0,0,0,0.12)',
-  highlight: 'rgba(255,255,255,0.65)',
-  greenOn: '#65b045',
-  greenGlow: '#8cd070',
-  redOff: '#cc5544',
-  ledOff: '#999',
+  cream: '#f5f0e6',
+  creamDark: '#e8e0d0',
+  warmGray: '#c8bfb0',
+  warmGrayDark: '#a89e90',
+  brown: '#4a3728',
+  brownLight: '#6b5744',
+  brownMid: '#5c4a3a',
+  green: '#2d4a3e',
+  greenLight: '#3a6050',
+  greenBright: '#5a9a40',
+  greenLed: '#7acc50',
+  greenLedGlow: '#a0e870',
+  red: '#8b3a3a',
+  redLight: '#a85050',
+  redLed: '#cc4444',
+  redLedGlow: '#ff6666',
+  text: '#3a2e24',
+  textMuted: '#6b5e52',
+  textDim: '#8a7e72',
+  textLight: '#f5f0e6',
+  panelBg: '#ede6d8',
+  panelInset: '#ddd5c5',
+  borderDark: '#8a7e72',
+  borderMid: '#a89e90',
+  borderLight: '#c8bfb0',
+  highlight: 'rgba(255, 255, 250, 0.45)',
+  insetShadow: 'rgba(60, 40, 20, 0.15)',
 }
 
-const font = "'Lucida Grande', 'Helvetica Neue', Geneva, Verdana, sans-serif"
+const font =
+  "'Courier New', 'Consolas', 'Monaco', 'Lucida Console', monospace"
+const fontUI =
+  "'Lucida Grande', 'Segoe UI', 'Helvetica Neue', Geneva, Verdana, sans-serif"
+
+const grainBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`
+
+const ledPulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+`
 
 const Shell = styled(Box)({
   width: '100%',
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
-  fontFamily: font,
+  fontFamily: fontUI,
   fontSize: 11,
   color: c.text,
-  background: c.panelBg,
+  background: `${c.panelBg}`,
+  backgroundImage: grainBg,
   overflow: 'hidden',
   WebkitFontSmoothing: 'antialiased',
 })
 
-const Toolbar = styled(Box)({
-  height: 32,
-  minHeight: 32,
+const TitleBar = styled(Box)({
+  height: 36,
+  minHeight: 36,
   display: 'flex',
   alignItems: 'center',
-  padding: '0 12px',
-  gap: 8,
-  background: `linear-gradient(180deg, ${c.toolbarTop} 0%, ${c.toolbarBot} 100%)`,
-  borderBottom: `1px solid ${c.toolbarBorder}`,
-  boxShadow: `inset 0 1px 0 ${c.highlight}`,
+  padding: '0 14px',
+  gap: 10,
+  background: `linear-gradient(180deg, ${c.brownLight} 0%, ${c.brown} 100%)`,
+  borderBottom: `1px solid #2a1e14`,
+  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 3px rgba(0,0,0,0.2)`,
   position: 'relative',
 })
 
-const ToolbarTitle = styled(Typography)({
+const TitleText = styled(Typography)({
   fontFamily: font,
-  fontSize: 11,
+  fontSize: 12,
   fontWeight: 700,
-  color: c.text,
-  letterSpacing: '0.02em',
+  color: c.cream,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
   userSelect: 'none',
-  textShadow: `0 1px 0 rgba(255,255,255,0.5)`,
+  textShadow: '0 1px 2px rgba(0,0,0,0.4)',
 })
 
-const ToolbarSpacer = styled(Box)({ flex: 1 })
+const TitleSpacer = styled(Box)({ flex: 1 })
 
-const ToolbarBadge = styled(Box, {
+const StatusBadge = styled(Box, {
   shouldForwardProp: (p) => p !== 'active',
 })<{ active: boolean }>(({ active }) => ({
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 4,
-  padding: '2px 8px',
-  borderRadius: 3,
-  fontSize: 10,
-  fontWeight: 600,
+  gap: 5,
+  padding: '2px 10px',
+  borderRadius: 2,
+  fontSize: 9,
+  fontWeight: 700,
   fontFamily: font,
-  color: active ? '#2d6414' : '#664',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  color: active ? '#d4ecc0' : '#e8c8b0',
   background: active
-    ? 'linear-gradient(180deg, #d4eac0 0%, #b8d8a0 100%)'
-    : 'linear-gradient(180deg, #e8e8e0 0%, #d4d4c8 100%)',
-  border: `1px solid ${active ? '#8cb870' : '#b0b0a8'}`,
-  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 1px rgba(0,0,0,0.06)`,
-  textShadow: `0 1px 0 rgba(255,255,255,0.4)`,
+    ? 'linear-gradient(180deg, #3a6050 0%, #2d4a3e 100%)'
+    : 'linear-gradient(180deg, #6b4040 0%, #5a3030 100%)',
+  border: `1px solid ${active ? '#1a3028' : '#3a1818'}`,
+  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.2)`,
   userSelect: 'none',
 }))
 
 const Body = styled(Box)({
   flex: 1,
   display: 'grid',
-  gridTemplateColumns: '160px 1fr',
+  gridTemplateColumns: '180px 1fr 220px',
   overflow: 'hidden',
+  background: c.panelBg,
+  backgroundImage: grainBg,
 })
 
-const Sidebar = styled(Box)({
+const StatusPanel = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
-  padding: '10px 8px',
-  gap: 1,
-  background: `linear-gradient(180deg, ${c.sidebarBg} 0%, #d8d8d8 100%)`,
-  borderRight: `1px solid ${c.border}`,
+  padding: '14px 12px',
+  gap: 10,
+  background: `linear-gradient(180deg, ${c.creamDark} 0%, #d8d0c0 100%)`,
+  backgroundImage: grainBg,
+  borderRight: `1px solid ${c.borderMid}`,
   boxShadow: `inset -1px 0 0 ${c.highlight}`,
 })
 
-const SidebarLabel = styled(Typography)({
+const SectionLabel = styled(Typography)({
   fontFamily: font,
   fontSize: 9,
   fontWeight: 700,
   color: c.textDim,
-  letterSpacing: '0.08em',
+  letterSpacing: '0.12em',
   textTransform: 'uppercase',
-  padding: '4px 8px 3px',
-  textShadow: `0 1px 0 rgba(255,255,255,0.5)`,
+  padding: '0 4px 4px',
+  borderBottom: `1px solid ${c.borderLight}`,
   userSelect: 'none',
 })
 
-const NavItem = styled(ButtonBase)<{ selected?: boolean }>(({ selected }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-  padding: '4px 8px',
+const InsetBox = styled(Box)({
   borderRadius: 3,
-  width: '100%',
-  justifyContent: 'flex-start',
-  fontFamily: font,
-  fontSize: 11,
-  fontWeight: selected ? 700 : 400,
-  color: selected ? c.white : c.text,
-  background: selected
-    ? 'linear-gradient(180deg, #6c99d0 0%, #4776b8 100%)'
-    : 'transparent',
-  boxShadow: selected
-    ? 'inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 2px rgba(0,0,0,0.15)'
-    : 'none',
-  border: selected ? '1px solid #3a5f94' : '1px solid transparent',
-  textShadow: selected
-    ? '0 -1px 0 rgba(0,0,0,0.25)'
-    : `0 1px 0 rgba(255,255,255,0.5)`,
-  transition: 'none',
-  '&:hover': {
-    background: selected
-      ? 'linear-gradient(180deg, #6c99d0 0%, #4776b8 100%)'
-      : 'rgba(0,0,0,0.04)',
-  },
-  '& .MuiSvgIcon-root': {
-    fontSize: 14,
-    color: selected ? c.white : c.textMuted,
-  },
-}))
-
-const MainPanel = styled(Box)({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 20,
-  padding: 24,
-  position: 'relative',
-  overflow: 'hidden',
-})
-
-const InsetPanel = styled(Box)({
-  padding: '16px 24px',
-  borderRadius: 4,
   border: `1px solid ${c.borderDark}`,
-  background: `linear-gradient(180deg, #d8d8d8 0%, ${c.panelInset} 3%, #eaeaea 100%)`,
+  background: `linear-gradient(180deg, #d0c8b8 0%, ${c.panelInset} 3%, #e4ddd0 100%)`,
   boxShadow: `inset 0 1px 3px ${c.insetShadow}, 0 1px 0 ${c.highlight}`,
-  textAlign: 'center',
-  width: '100%',
-  maxWidth: 340,
+  padding: '8px 10px',
 })
-
-const KnobContainer = styled(Box)({
-  position: 'relative',
-  width: 160,
-  height: 160,
-  borderRadius: '50%',
-  background: `linear-gradient(160deg, #d0d0d0 0%, #b8b8b8 40%, #a0a0a0 100%)`,
-  border: '1px solid #888',
-  boxShadow: [
-    '0 4px 12px rgba(0,0,0,0.18)',
-    '0 1px 3px rgba(0,0,0,0.1)',
-    'inset 0 1px 0 rgba(255,255,255,0.5)',
-  ].join(','),
-  display: 'grid',
-  placeItems: 'center',
-  cursor: 'pointer',
-  userSelect: 'none',
-  '&:active': {
-    boxShadow: [
-      '0 2px 6px rgba(0,0,0,0.18)',
-      'inset 0 2px 6px rgba(0,0,0,0.12)',
-    ].join(','),
-  },
-})
-
-const KnobFace = styled(Box, {
-  shouldForwardProp: (p) => p !== 'active',
-})<{ active: boolean }>(({ active }) => ({
-  width: 120,
-  height: 120,
-  borderRadius: '50%',
-  display: 'grid',
-  placeItems: 'center',
-  background: active
-    ? `radial-gradient(circle at 40% 35%, #f0f0f0 0%, #ddd 50%, #c8c8c8 100%)`
-    : `radial-gradient(circle at 40% 35%, #e8e8e8 0%, #d0d0d0 50%, #b8b8b8 100%)`,
-  border: `1px solid ${active ? '#a0a0a0' : '#909090'}`,
-  boxShadow: `inset 0 2px 4px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(255,255,255,0.4)`,
-  position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: '12%',
-    left: '20%',
-    width: '35%',
-    height: '20%',
-    borderRadius: '50%',
-    background: 'rgba(255,255,255,0.35)',
-    filter: 'blur(6px)',
-    pointerEvents: 'none',
-  },
-}))
-
-const PowerIconStyled = styled(PowerSettingsNewRounded, {
-  shouldForwardProp: (p) => p !== 'active',
-})<{ active: boolean }>(({ active }) => ({
-  fontSize: 42,
-  color: active ? c.greenOn : '#999',
-  filter: active ? `drop-shadow(0 0 4px ${c.greenGlow})` : 'none',
-  transition: 'color 0.2s, filter 0.2s',
-}))
-
-const Led = styled(Box, {
-  shouldForwardProp: (p) => p !== 'active',
-})<{ active: boolean }>(({ active }) => ({
-  width: 8,
-  height: 8,
-  borderRadius: '50%',
-  background: active
-    ? `radial-gradient(circle at 40% 35%, ${c.greenGlow}, ${c.greenOn})`
-    : `radial-gradient(circle at 40% 35%, #bbb, #999)`,
-  boxShadow: active
-    ? `0 0 6px ${c.greenGlow}, inset 0 1px 1px rgba(255,255,255,0.4)`
-    : `inset 0 1px 2px rgba(0,0,0,0.2)`,
-  border: `1px solid ${active ? '#4a8830' : '#888'}`,
-  transition: 'all 0.2s',
-}))
 
 const StatusRow = styled(Box)({
   display: 'flex',
@@ -303,25 +202,51 @@ const StatusRow = styled(Box)({
   justifyContent: 'space-between',
   padding: '3px 0',
   '& + &': {
-    borderTop: `1px solid #d0d0d0`,
+    borderTop: `1px dotted ${c.borderLight}`,
   },
 })
 
 const StatusKey = styled(Typography)({
   fontFamily: font,
-  fontSize: 10,
+  fontSize: 9,
   fontWeight: 400,
   color: c.textMuted,
   userSelect: 'none',
+  letterSpacing: '0.04em',
 })
 
 const StatusVal = styled(Typography)({
   fontFamily: font,
-  fontSize: 10,
+  fontSize: 9,
   fontWeight: 700,
   color: c.text,
   userSelect: 'none',
 })
+
+const Led = styled(Box, {
+  shouldForwardProp: (p) => p !== 'active' && p !== 'color',
+})<{ active: boolean; color?: 'green' | 'red' }>(
+  ({ active, color = 'green' }) => {
+    const onColor = color === 'green' ? c.greenLed : c.redLed
+    const glowColor = color === 'green' ? c.greenLedGlow : c.redLedGlow
+    const borderColor = color === 'green' ? '#3a6830' : '#6a2828'
+    return {
+      width: 8,
+      height: 8,
+      borderRadius: '50%',
+      background: active
+        ? `radial-gradient(circle at 40% 35%, ${glowColor}, ${onColor})`
+        : `radial-gradient(circle at 40% 35%, #bbb5a8, #9a9488)`,
+      boxShadow: active
+        ? `0 0 6px ${glowColor}, 0 0 12px ${glowColor}40, inset 0 1px 1px rgba(255,255,255,0.4)`
+        : `inset 0 1px 2px rgba(0,0,0,0.2)`,
+      border: `1px solid ${active ? borderColor : '#7a7268'}`,
+      transition: 'all 0.3s',
+      animation: active ? `${ledPulse} 3s ease-in-out infinite` : 'none',
+      flexShrink: 0,
+    }
+  },
+)
 
 const VUMeterBar = styled(Box)({
   display: 'flex',
@@ -338,28 +263,225 @@ const VUSegment = styled(Box, {
   borderRadius: 1,
   background: active
     ? level > 5
-      ? c.redOff
+      ? c.red
       : level > 3
-        ? '#c8a030'
-        : c.greenOn
-    : '#ccc',
-  border: `1px solid ${active ? (level > 5 ? '#a03020' : level > 3 ? '#a08020' : '#4a8830') : '#b8b8b8'}`,
-  transition: 'all 0.2s',
+        ? '#b89030'
+        : c.greenBright
+    : '#c8c0b0',
+  border: `1px solid ${
+    active
+      ? level > 5
+        ? '#6a2828'
+        : level > 3
+          ? '#8a6820'
+          : '#3a6830'
+      : '#a89e90'
+  }`,
+  boxShadow: active
+    ? `inset 0 1px 0 rgba(255,255,255,0.3)`
+    : 'none',
+  transition: 'all 0.3s',
 }))
 
+const CenterPanel = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 16,
+  padding: 24,
+  position: 'relative',
+  background: c.panelBg,
+  backgroundImage: grainBg,
+})
+
+const SwitchBase = styled(Box, {
+  shouldForwardProp: (p) => p !== 'active',
+})<{ active: boolean }>(({ active }) => ({
+  width: 140,
+  height: 200,
+  borderRadius: 8,
+  border: `2px solid ${active ? '#2a5a30' : '#6a3030'}`,
+  background: active
+    ? `linear-gradient(180deg, #d8e8d0 0%, #c8d8c0 50%, #b8c8b0 100%)`
+    : `linear-gradient(180deg, #e0d0c8 0%, #d0c0b8 50%, #c8b8b0 100%)`,
+  boxShadow: active
+    ? [
+        `inset 0 2px 4px rgba(255,255,255,0.3)`,
+        `inset 0 -2px 4px rgba(40, 80, 40, 0.1)`,
+        `0 4px 16px rgba(90, 154, 64, 0.25)`,
+        `0 0 24px rgba(90, 154, 64, 0.1)`,
+        `0 1px 3px rgba(60, 40, 20, 0.15)`,
+      ].join(',')
+    : [
+        `inset 0 2px 4px rgba(255,255,255,0.3)`,
+        `inset 0 -2px 4px rgba(80, 40, 40, 0.1)`,
+        `0 4px 12px rgba(139, 58, 58, 0.15)`,
+        `0 1px 3px rgba(60, 40, 20, 0.15)`,
+      ].join(','),
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '12px 0',
+  position: 'relative',
+  cursor: 'pointer',
+  userSelect: 'none',
+  transition: 'background 0.5s ease, box-shadow 0.5s ease, border-color 0.5s ease',
+  '&:active': {
+    boxShadow: [
+      `inset 0 2px 6px ${c.insetShadow}`,
+      `0 2px 6px rgba(60, 40, 20, 0.15)`,
+    ].join(','),
+  },
+}))
+
+const LeverTrack = styled(Box, {
+  shouldForwardProp: (p) => p !== 'active',
+})<{ active: boolean }>(({ active }) => ({
+  width: 48,
+  height: 120,
+  borderRadius: 24,
+  border: `2px solid ${active ? '#3a6830' : '#6a3828'}`,
+  background: active
+    ? `linear-gradient(180deg, #4a7a40 0%, #3a6830 50%, #2a5820 100%)`
+    : `linear-gradient(180deg, #7a5848 0%, #6a4838 50%, #5a3828 100%)`,
+  boxShadow: active
+    ? `inset 0 3px 8px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.1), 0 0 12px rgba(90,154,64,0.2)`
+    : `inset 0 3px 8px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.1)`,
+  position: 'relative',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  transition: 'background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease',
+}))
+
+const LeverHandle = styled(Box, {
+  shouldForwardProp: (p) => p !== 'active',
+})<{ active: boolean }>(({ active }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: '50%',
+  background: active
+    ? `radial-gradient(circle at 40% 35%, #e8e0d0 0%, #c8c0b0 60%, #b0a898 100%)`
+    : `radial-gradient(circle at 40% 35%, #d8d0c0 0%, #b8b0a0 60%, #a09888 100%)`,
+  border: `2px solid ${active ? '#8a7e68' : '#7a7060'}`,
+  boxShadow: [
+    `0 2px 6px rgba(0,0,0,0.25)`,
+    `inset 0 2px 3px rgba(255,255,255,0.4)`,
+    `inset 0 -1px 2px rgba(0,0,0,0.1)`,
+  ].join(','),
+  position: 'absolute',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  top: active ? 6 : 'calc(100% - 46px)',
+  transition: 'top 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s ease, border-color 0.4s ease',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: '15%',
+    left: '22%',
+    width: '30%',
+    height: '20%',
+    borderRadius: '50%',
+    background: 'rgba(255,255,255,0.35)',
+    filter: 'blur(3px)',
+    pointerEvents: 'none',
+  },
+}))
+
+const SwitchLabel = styled(Typography, {
+  shouldForwardProp: (p) => p !== 'placement' && p !== 'lit',
+})<{ placement: 'top' | 'bottom'; lit?: boolean }>(({ placement, lit }) => ({
+  fontFamily: font,
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.15em',
+  textTransform: 'uppercase',
+  color: lit ? (placement === 'top' ? c.greenBright : c.red) : c.textDim,
+  textShadow: lit ? `0 0 6px ${placement === 'top' ? 'rgba(90,154,64,0.4)' : 'rgba(139,58,58,0.4)'}` : 'none',
+  position: 'absolute',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  ...(placement === 'top'
+    ? { top: 8 }
+    : { bottom: 8 }),
+  userSelect: 'none',
+  transition: 'color 0.4s ease, text-shadow 0.4s ease',
+}))
+
+const ButtonGrid = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  padding: '14px 14px',
+  gap: 10,
+  background: `linear-gradient(180deg, ${c.creamDark} 0%, #d8d0c0 100%)`,
+  backgroundImage: grainBg,
+  borderLeft: `1px solid ${c.borderMid}`,
+  boxShadow: `inset 1px 0 0 ${c.highlight}`,
+})
+
+const GridContainer = styled(Box)({
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 8,
+  flex: 1,
+  alignContent: 'center',
+})
+
+const RetroButton = styled(ButtonBase)({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
+  padding: '14px 8px',
+  borderRadius: 4,
+  border: `1px solid ${c.borderDark}`,
+  background: `linear-gradient(180deg, #e8e0d0 0%, #d8d0c0 40%, #ccc4b4 100%)`,
+  boxShadow: [
+    `inset 0 1px 0 ${c.highlight}`,
+    `0 2px 4px ${c.insetShadow}`,
+    `0 1px 0 rgba(255,255,250,0.3)`,
+  ].join(','),
+  fontFamily: fontUI,
+  fontSize: 10,
+  fontWeight: 600,
+  color: c.text,
+  letterSpacing: '0.02em',
+  textShadow: `0 1px 0 rgba(255,255,255,0.5)`,
+  cursor: 'pointer',
+  userSelect: 'none',
+  transition: 'none',
+  '&:hover': {
+    background: `linear-gradient(180deg, #f0e8d8 0%, #e0d8c8 40%, #d4ccbc 100%)`,
+    borderColor: c.brownLight,
+  },
+  '&:active': {
+    background: `linear-gradient(180deg, #c8c0b0 0%, #d0c8b8 60%, #d8d0c0 100%)`,
+    boxShadow: `inset 0 2px 4px ${c.insetShadow}, 0 1px 0 ${c.highlight}`,
+    transform: 'translateY(1px)',
+  },
+  '& .MuiSvgIcon-root': {
+    fontSize: 20,
+    color: c.brownLight,
+  },
+})
+
 const FooterBar = styled(Box)({
-  height: 22,
-  minHeight: 22,
+  height: 24,
+  minHeight: 24,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: '0 10px',
-  background: `linear-gradient(180deg, #d4d4d4 0%, #c0c0c0 100%)`,
-  borderTop: `1px solid ${c.border}`,
+  padding: '0 14px',
+  background: `linear-gradient(180deg, ${c.warmGray} 0%, ${c.warmGrayDark} 100%)`,
+  borderTop: `1px solid ${c.borderDark}`,
   boxShadow: `inset 0 1px 0 ${c.highlight}`,
   fontSize: 9,
-  color: c.textDim,
   fontFamily: font,
+  color: c.textDim,
+  letterSpacing: '0.04em',
   userSelect: 'none',
 })
 
@@ -392,111 +514,194 @@ const DashboardPage = () => {
 
   return (
     <Shell>
-      {/* ── Toolbar ── */}
-      <Toolbar data-tauri-drag-region>
+      {/* Title Bar */}
+      <TitleBar data-tauri-drag-region>
         <Led active={indicator} />
-        <ToolbarTitle>Clash Verge Rev</ToolbarTitle>
-        <ToolbarSpacer data-tauri-drag-region />
-        <ToolbarBadge active={indicator}>
-          {indicator ? 'PROXY ON' : 'PROXY OFF'}
-        </ToolbarBadge>
-        <Typography sx={{ fontFamily: font, fontSize: 10, color: c.textDim }}>
+        <TitleText>Clash Verge</TitleText>
+        <TitleSpacer data-tauri-drag-region />
+        <StatusBadge active={indicator}>
+          {indicator ? '● ONLINE' : '○ OFFLINE'}
+        </StatusBadge>
+        <Typography
+          sx={{
+            fontFamily: font,
+            fontSize: 9,
+            color: 'rgba(245,240,230,0.5)',
+            letterSpacing: '0.08em',
+          }}
+        >
           {timeLabel}
         </Typography>
-      </Toolbar>
+      </TitleBar>
 
-      {/* ── Body ── */}
+      {/* Body */}
       <Body>
-        {/* Left Sidebar */}
-        <Sidebar>
-          <SidebarLabel>Menu</SidebarLabel>
-          {menuItems.map((item) => {
-            const label = t(item.labelKey)
-            return (
-              <NavItem
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                aria-label={label}
-              >
-                <item.icon />
-                {label}
-              </NavItem>
-            )
-          })}
-        </Sidebar>
+        {/* Left: Status Panel */}
+        <StatusPanel>
+          <SectionLabel>System Status</SectionLabel>
 
-        {/* Center Panel */}
-        <MainPanel data-tauri-drag-region>
-          <Typography
-            sx={{
-              fontFamily: font,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: c.textDim,
-              textShadow: `0 1px 0 rgba(255,255,255,0.5)`,
-            }}
-          >
-            System Proxy Control
-          </Typography>
-
-          {/* Power Knob */}
-          <KnobContainer onClick={handleToggleProxy}>
-            <KnobFace active={indicator}>
-              <PowerIconStyled active={indicator} />
-            </KnobFace>
-          </KnobContainer>
-
-          {/* ON / OFF label */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Led active={indicator} />
-            <Typography
-              sx={{
-                fontFamily: font,
-                fontSize: 12,
-                fontWeight: 700,
-                color: indicator ? '#2d6414' : c.textMuted,
-                letterSpacing: '0.15em',
-                textShadow: `0 1px 0 rgba(255,255,255,0.5)`,
-              }}
-            >
-              {indicator ? 'ON' : 'OFF'}
-            </Typography>
-          </Box>
-
-          {/* Status Panel */}
-          <InsetPanel>
+          <InsetBox>
             <StatusRow>
-              <StatusKey>Status</StatusKey>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Led active={indicator} />
-                <StatusVal>{indicator ? 'Connected' : 'Disconnected'}</StatusVal>
+              <StatusKey>STATUS</StatusKey>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Led active={indicator} color={indicator ? 'green' : 'red'} />
+                <StatusVal>
+                  {indicator ? 'Connected' : 'Disconnected'}
+                </StatusVal>
               </Box>
             </StatusRow>
             <StatusRow>
-              <StatusKey>Mode</StatusKey>
-              <StatusVal>{indicator ? 'System Proxy' : 'Direct'}</StatusVal>
+              <StatusKey>MODE</StatusKey>
+              <StatusVal>{indicator ? 'Sys Proxy' : 'Direct'}</StatusVal>
             </StatusRow>
             <StatusRow>
-              <StatusKey>Date</StatusKey>
+              <StatusKey>ROUTE</StatusKey>
+              <StatusVal>{indicator ? 'Global' : '—'}</StatusVal>
+            </StatusRow>
+            <StatusRow>
+              <StatusKey>DATE</StatusKey>
               <StatusVal>{dateLabel}</StatusVal>
             </StatusRow>
-            <StatusRow>
-              <StatusKey>Signal</StatusKey>
+          </InsetBox>
+
+          <SectionLabel>Signal Meter</SectionLabel>
+
+          <InsetBox>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <StatusKey>LEVEL</StatusKey>
               <VUMeterBar>
                 {Array.from({ length: 7 }, (_, i) => (
                   <VUSegment key={i} active={indicator} level={i} />
                 ))}
               </VUMeterBar>
-            </StatusRow>
-          </InsetPanel>
-        </MainPanel>
+            </Box>
+          </InsetBox>
+
+          <SectionLabel>Indicators</SectionLabel>
+
+          <InsetBox>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+              {[
+                { label: 'PROXY', on: indicator },
+                { label: 'TUN', on: false },
+                { label: 'DNS', on: indicator },
+              ].map((item) => (
+                <Box
+                  key={item.label}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <StatusKey>{item.label}</StatusKey>
+                  <Led active={item.on} color={item.on ? 'green' : 'red'} />
+                </Box>
+              ))}
+            </Box>
+          </InsetBox>
+        </StatusPanel>
+
+        {/* Center: Main Switch */}
+        <CenterPanel data-tauri-drag-region>
+          <Typography
+            sx={{
+              fontFamily: font,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              color: c.textDim,
+            }}
+          >
+            System Proxy Control
+          </Typography>
+
+          <SwitchBase active={indicator} onClick={handleToggleProxy}>
+            <SwitchLabel placement="top" lit={indicator}>ON</SwitchLabel>
+            <LeverTrack active={indicator}>
+              <LeverHandle active={indicator} />
+            </LeverTrack>
+            <SwitchLabel placement="bottom" lit={!indicator}>OFF</SwitchLabel>
+          </SwitchBase>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Led active={indicator} color={indicator ? 'green' : 'red'} />
+            <Typography
+              sx={{
+                fontFamily: font,
+                fontSize: 15,
+                fontWeight: 700,
+                color: indicator ? '#3a8a28' : '#a04040',
+                letterSpacing: '0.2em',
+                textShadow: indicator
+                  ? '0 0 8px rgba(90,154,64,0.3)'
+                  : '0 0 8px rgba(160,64,64,0.2)',
+                transition: 'color 0.4s ease, text-shadow 0.4s ease',
+              }}
+            >
+              {indicator ? 'ONLINE' : 'OFFLINE'}
+            </Typography>
+            <Led active={indicator} color={indicator ? 'green' : 'red'} />
+          </Box>
+
+          <InsetBox sx={{ maxWidth: 200, textAlign: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+              <PowerSettingsNewRounded
+                sx={{
+                  fontSize: 14,
+                  color: indicator ? c.greenBright : c.textDim,
+                }}
+              />
+              <Typography
+                sx={{
+                  fontFamily: font,
+                  fontSize: 9,
+                  color: c.textMuted,
+                  letterSpacing: '0.06em',
+                }}
+              >
+                {indicator
+                  ? 'Proxy engine running'
+                  : 'Flip switch to connect'}
+              </Typography>
+            </Box>
+          </InsetBox>
+        </CenterPanel>
+
+        {/* Right: Function Buttons */}
+        <ButtonGrid>
+          <SectionLabel>Control Panel</SectionLabel>
+
+          <GridContainer>
+            {menuItems.map((item) => {
+              const label = t(item.labelKey)
+              return (
+                <RetroButton
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  aria-label={label}
+                >
+                  <item.icon />
+                  {label}
+                </RetroButton>
+              )
+            })}
+          </GridContainer>
+        </ButtonGrid>
       </Body>
 
-      {/* ── Footer / Status Bar ── */}
+      {/* Footer */}
       <FooterBar>
-        <span>{indicator ? 'System proxy active' : 'Direct connection'}</span>
+        <span>
+          {indicator ? '● System proxy active' : '○ Direct connection'}
+        </span>
         <span>Clash Verge Rev v2.4</span>
       </FooterBar>
     </Shell>
