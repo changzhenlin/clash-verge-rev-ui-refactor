@@ -1,3 +1,5 @@
+import ArrowDownwardRounded from '@mui/icons-material/ArrowDownwardRounded'
+import ArrowUpwardRounded from '@mui/icons-material/ArrowUpwardRounded'
 import DnsRounded from '@mui/icons-material/DnsRounded'
 import ForkRightRounded from '@mui/icons-material/ForkRightRounded'
 import LanguageRounded from '@mui/icons-material/LanguageRounded'
@@ -7,11 +9,13 @@ import SubjectRounded from '@mui/icons-material/SubjectRounded'
 import WifiRounded from '@mui/icons-material/WifiRounded'
 import { Box, ButtonBase, Switch, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 
 import { useSystemProxyState } from '@/hooks/use-system-proxy-state'
+import { useTrafficData } from '@/hooks/use-traffic-data'
+import parseTraffic from '@/utils/parse-traffic'
 
 type MenuItem = {
   icon: typeof WifiRounded
@@ -137,11 +141,31 @@ const QuickActionButton = styled(ButtonBase)({
   },
 })
 
+const MAX_HISTORY = 60
+
 const DashboardPage = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { indicator, toggleSystemProxy } = useSystemProxyState()
+  const { response: trafficData } = useTrafficData()
   const [now, setNow] = useState(() => new Date())
+  const uploadHistory = useRef<number[]>([])
+  const downloadHistory = useRef<number[]>([])
+  const lastSampleTime = useRef(0)
+  const [, forceRender] = useState(0)
+
+  useEffect(() => {
+    const now2 = Date.now()
+    if (now2 - lastSampleTime.current < 1000) return
+    lastSampleTime.current = now2
+    const up = trafficData.data?.up ?? 0
+    const down = trafficData.data?.down ?? 0
+    uploadHistory.current.push(up)
+    downloadHistory.current.push(down)
+    if (uploadHistory.current.length > MAX_HISTORY) uploadHistory.current.shift()
+    if (downloadHistory.current.length > MAX_HISTORY) downloadHistory.current.shift()
+    forceRender((n) => n + 1)
+  }, [trafficData])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000)
@@ -191,6 +215,179 @@ const DashboardPage = () => {
       </Header>
 
       <Body>
+        {/* Speed Card */}
+        <Card
+          sx={{
+            position: 'relative',
+            background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 50%, #ffffff 100%)',
+            border: '1px solid #dbeafe',
+            padding: '60px',
+            minHeight: 180,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Real-time line chart background */}
+          <svg
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+            }}
+            viewBox="0 0 600 200"
+            preserveAspectRatio="none"
+          >
+            {(() => {
+              const upData = uploadHistory.current
+              const downData = downloadHistory.current
+              const allValues = [...upData, ...downData]
+              const maxVal = Math.max(...allValues, 1024)
+
+              const buildPath = (data: number[]) => {
+                if (data.length < 2) return ''
+                const stepX = 600 / (MAX_HISTORY - 1)
+                const offset = MAX_HISTORY - data.length
+                return data
+                  .map((val, i) => {
+                    const x = (offset + i) * stepX
+                    const y = 200 - (val / maxVal) * 170 - 10
+                    return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
+                  })
+                  .join(' ')
+              }
+
+              const buildArea = (data: number[]) => {
+                if (data.length < 2) return ''
+                const stepX = 600 / (MAX_HISTORY - 1)
+                const offset = MAX_HISTORY - data.length
+                const linePart = data
+                  .map((val, i) => {
+                    const x = (offset + i) * stepX
+                    const y = 200 - (val / maxVal) * 170 - 10
+                    return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
+                  })
+                  .join(' ')
+                const lastX = (offset + data.length - 1) * stepX
+                const firstX = offset * stepX
+                return `${linePart} L ${lastX.toFixed(1)} 200 L ${firstX.toFixed(1)} 200 Z`
+              }
+
+              return (
+                <>
+                  <defs>
+                    <linearGradient id="uploadGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#6366f1" stopOpacity="0.02" />
+                    </linearGradient>
+                    <linearGradient id="downloadGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <path d={buildArea(upData)} fill="url(#uploadGrad)" />
+                  <path
+                    d={buildPath(upData)}
+                    fill="none"
+                    stroke="#6366f1"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.6"
+                  />
+                  <path d={buildArea(downData)} fill="url(#downloadGrad)" />
+                  <path
+                    d={buildPath(downData)}
+                    fill="none"
+                    stroke="#06b6d4"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.6"
+                  />
+                </>
+              )
+            })()}
+          </svg>
+
+          {/* Speed text overlay */}
+          <Box
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+            }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, marginBottom: 1 }}>
+                <ArrowUpwardRounded sx={{ fontSize: 28, color: '#64748b' }} />
+                <Typography sx={{ fontSize: 22, color: '#64748b', fontWeight: 500 }}>
+                  Upload
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                <Typography
+                  sx={{
+                    fontSize: 72,
+                    fontWeight: 700,
+                    color: '#1e40af',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    lineHeight: 1,
+                  }}
+                >
+                  {parseTraffic(trafficData.data?.up)[0]}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 22,
+                    color: '#64748b',
+                    fontWeight: 500,
+                  }}
+                >
+                  {parseTraffic(trafficData.data?.up)[1]}/s
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, marginBottom: 1 }}>
+                <ArrowDownwardRounded sx={{ fontSize: 28, color: '#64748b' }} />
+                <Typography sx={{ fontSize: 22, color: '#64748b', fontWeight: 500 }}>
+                  Download
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                <Typography
+                  sx={{
+                    fontSize: 72,
+                    fontWeight: 700,
+                    color: '#1e40af',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    lineHeight: 1,
+                  }}
+                >
+                  {parseTraffic(trafficData.data?.down)[0]}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 22,
+                    color: '#64748b',
+                    fontWeight: 500,
+                  }}
+                >
+                  {parseTraffic(trafficData.data?.down)[1]}/s
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Card>
+
         {/* Proxy Control Card */}
         <Card
           onClick={handleToggleProxy}
@@ -270,54 +467,6 @@ const DashboardPage = () => {
                 },
               }}
             />
-          </Box>
-        </Card>
-
-        {/* Status Info */}
-        <Card>
-          <Typography
-            sx={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#64748b',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              marginBottom: 1.5,
-            }}
-          >
-            Status
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {[
-              { label: 'Mode', value: indicator ? 'System Proxy' : 'Direct' },
-              { label: 'Route', value: indicator ? 'Global' : '—' },
-              { label: 'DNS', value: indicator ? 'Active' : 'Inactive' },
-              { label: 'TUN', value: 'Inactive' },
-            ].map((item) => (
-              <Box
-                key={item.label}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '4px 0',
-                }}
-              >
-                <Typography sx={{ fontSize: 13, color: '#64748b' }}>
-                  {item.label}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#0f172a',
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}
-                >
-                  {item.value}
-                </Typography>
-              </Box>
-            ))}
           </Box>
         </Card>
 
