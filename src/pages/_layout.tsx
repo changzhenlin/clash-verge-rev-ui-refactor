@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 
 import { BaseErrorBoundary } from '@/components/base'
+import FloatingProxyToggle from '@/components/layout/floating-proxy-toggle'
 import { NoticeManager } from '@/components/layout/notice-manager'
 import { WindowControls } from '@/components/layout/window-controller'
 import { useI18n } from '@/hooks/use-i18n'
@@ -40,6 +41,7 @@ const Layout = () => {
   const { switchLanguage } = useI18n()
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const isDashboard = pathname === '/'
   const isLogsPage = pathname === '/logs'
   const logsPageMountedRef = useRef(false)
   if (isLogsPage) logsPageMountedRef.current = true
@@ -175,6 +177,7 @@ const Layout = () => {
               <BaseErrorBoundary>
                 <Outlet />
               </BaseErrorBoundary>
+              {!isDashboard && <FloatingProxyToggle />}
               {logsPageMountedRef.current && (
                 <div
                   style={{
